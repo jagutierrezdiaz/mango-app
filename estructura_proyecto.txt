@@ -1,0 +1,58 @@
+﻿Patio Bohemio App - Estructura vigente (resumen)
+Actualizado: 2026-06-30
+
+.
+|-- package.json              # Backend + scripts de build (ejecutar desde la raíz)
+|-- vue.config.cjs            # Config Vue CLI (build apunta a frontend/)
+|-- postcss.config.cjs
+|-- tailwind.config.cjs
+|-- README.md
+|-- .env                      # Variables del backend (no commitear)
+|-- public/                   # Assets estáticos compartidos (Vue CLI + Express)
+|   |-- img/                  # Logos corporativos
+|   |-- sounds/               # Sonidos de notificaciones
+|   |-- favicon.ico
+|-- frontend/
+|   |-- package.json          # Dependencias del subpaquete frontend
+|   |-- vue.config.cjs        # Reexporta ../vue.config.cjs
+|   |-- public/
+|   |   |-- index.html        # Plantilla HTML del build
+|   |-- css/
+|   |   |-- tailwind.css
+|   |   |-- styles.css
+|   |-- src/
+|   |   |-- main.js
+|   |   |-- App.vue
+|   |   |-- views/
+|   |   |-- router/
+|   |   |-- stores/
+|   |   |-- services/
+|   |   |-- components/
+|   |   |-- utils/
+|   |   |-- config/
+|   |-- dist/                 # Salida del build (generado, no commitear)
+|   |-- scripts/
+|   |       check_tags.js
+|-- src/                      # Backend Node.js / Express
+|   |-- server.js
+|   |-- app.js
+|   |-- config/
+|   |-- routes/
+|   |-- controllers/
+|   |-- services/
+|   |-- middlewares/
+|   |-- utils/
+|   |-- realtime/
+|-- uploads/                  # Uploads runtime (puede estar vacío en dev)
+|-- logs/
+|-- logs_audit/
+
+Comandos principales (desde la raíz):
+  npm run backend     # Inicia el servidor API
+  npm run vue:serve   # Dev server Vue (puerto 5173 por defecto)
+  npm run build       # Genera frontend/dist/
+
+Notas:
+- public/ en la raíz es la fuente única de img/, sounds/ y favicon.ico.
+- Express sirve /img y /sounds desde public/ (ver src/app.js).
+- El frontend legacy HTML/JS fue retirado; no existe carpeta frontend/js.

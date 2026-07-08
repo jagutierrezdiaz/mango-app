@@ -1,0 +1,632 @@
+/* frontend/css/style.css */
+
+/* 1. Contenedor Principal del Pie del Modal */
+.modal-footer-btns {
+    display: flex !important;
+    /* La magia para separar izquierda de derecha */
+    justify-content: space-between !important; 
+    align-items: center !important;
+    margin-top: 2.5rem !important;
+    padding-top: 1.5rem !important;
+    width: 100% !important;
+    border-top: 1px solid #f1f5f9 !important;
+}
+
+/* 2. Contenedor para agrupar Cancelar y Guardar a la derecha */
+.modal-footer-right {
+    display: flex !important;
+    gap: 1rem !important;
+    align-items: center !important;
+}
+
+/* 3. Botón SUBIR FOTO (Izquierda) */
+.btn-upload-file {
+    background-color: #f1f3f6 !important;
+    color: #1f2937 !important;
+    padding: 0.6rem 1.2rem !important;
+    border-radius: 0.75rem !important;
+    font-weight: 700 !important;
+    text-transform: none !important; 
+    font-size: 0.85rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    /* Estilo dashed para indicar zona de carga */
+    border: 1px dashed #cbd5e1 !important; 
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-upload-file:hover {
+    background-color: #e5e7eb !important;
+    border-color: #94a3b8 !important;
+}
+
+/* 4. Botón CANCELAR (Gris) */
+.btn-modal-cancel {
+    background-color: #e5e7eb !important;
+    color: #374151 !important;
+    padding: 0.75rem 2rem !important;
+    border-radius: 0.75rem !important;
+    border: none !important;
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    transition: background 0.2s !important;
+}
+
+.btn-modal-cancel:hover {
+    background-color: #d1d5db !important;
+}
+
+/* 5. Botón GUARDAR (Naranja Corporativo) */
+.btn-modal-save {
+    background: #d97706 !important; 
+    color: white !important;
+    padding: 0.75rem 2rem !important;
+    border-radius: 0.75rem !important;
+    border: none !important;
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    transition: transform 0.2s, filter 0.2s !important;
+}
+
+.btn-modal-save:hover {
+    filter: brightness(1.1) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ================================
+   BOTONES DE ACCIÓN GLOBAL APP
+================================ */
+
+/* Botón principal de acción (+ Nuevo ...) */
+.btn-primary-action{
+    background-color:#0f172a !important;
+    color:white !important;
+    font-size:0.70rem !important;
+    font-weight:800 !important;
+    letter-spacing:0.05em !important;
+    text-transform:uppercase !important;
+
+    display:flex !important;
+    align-items:center !important;
+    gap:0.4rem !important;
+
+    padding:0.40rem 0.75rem !important;
+    border-radius:0.55rem !important;
+
+    cursor:pointer !important;
+
+    transition:all .2s ease !important;
+}
+
+.btn-primary-action:hover{
+    background-color:#ea580c !important;
+    transform:translateY(-1px);
+}
+
+/* Ícono del botón */
+.btn-primary-action i{
+    font-size:0.70rem;
+    position:relative;
+    top:-0.5px;
+}
+
+.btn-secondary-action{
+    background:#f1f5f9;
+    color:#1e293b;
+    font-size:0.70rem;
+    font-weight:700;
+    padding:0.40rem 0.75rem;
+    border-radius:0.55rem;
+    display:flex;
+    align-items:center;
+    gap:0.4rem;
+    cursor:pointer;
+}
+
+.btn-secondary-action:hover{
+    background:#e2e8f0;
+}
+
+/* ================================
+   COMANDAS - ACCIONES EN ENCABEZADO
+================================ */
+
+.btn-comanda-pdf{
+    background: #3186f5 !important;
+}
+
+.btn-comanda-edit,
+.btn-comanda-delete, 
+.btn-comanda-pdf {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    padding: 0.42rem 0.75rem !important;
+    border-radius: 0.55rem !important;
+    font-size: 0.7rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.02em !important;
+    border: 1px solid transparent !important;
+    transition: all 0.18s ease !important;
+    cursor: pointer !important;
+}
+
+.btn-comanda-edit {
+    background: #ecfeff !important;
+    color: #0f766e !important;
+    border-color: #99f6e4 !important;
+}
+
+.btn-comanda-edit:hover {
+    filter: brightness(2);
+}
+
+.btn-comanda-delete {
+    background: #fff1f2 !important;
+    color: #be123c !important;
+    border-color: #fecdd3 !important;
+}
+
+.btn-comanda-delete:hover {
+    filter: brightness(2);
+}
+
+/* ================================
+   ENCABEZADO ESTANDAR DE REPORTES
+================================ */
+
+.report-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+}
+
+.report-head-title {
+    flex: 1;
+    text-align: center;
+    color: #115e59;
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.report-head-date {
+    min-width: 11rem;
+    text-align: right;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.logo-wrap {
+    min-width: 8.5rem;
+}
+
+.logo-wrap img {
+    max-width: 8.5rem;
+    max-height: 2.5rem;
+    object-fit: contain;
+}
+
+/* ================================
+   SOFT UI + MATERIAL 3 BUTTONS
+================================ */
+
+:root {
+    --pb-btn-radius: 14px;
+    --pb-btn-border: rgba(255, 255, 255, 0.44);
+    --pb-btn-shadow-1: 10px 10px 22px rgba(30, 41, 59, 0.12);
+    --pb-btn-shadow-2: -8px -8px 20px rgba(255, 255, 255, 0.78);
+    --pb-btn-transition: 240ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Pasteles saturados, cercanos a Tailwind 600 */
+    --pb-soft-new-a: #059669;
+    --pb-soft-new-b: #34d399;
+    --pb-soft-consult-a: #4f46e5;
+    --pb-soft-consult-b: #2563eb;
+    --pb-soft-export-a: #0891b2;
+    --pb-soft-export-b: #22d3ee;
+    --pb-soft-print-a: #334155;
+    --pb-soft-print-b: #475569;
+    --pb-soft-edit-a: #ea580c;
+    --pb-soft-edit-b: #fb923c;
+    --pb-soft-danger-a: #dc2626;
+    --pb-soft-danger-b: #e11d48;
+    --pb-soft-warn-a: #d97706;
+    --pb-soft-warn-b: #f59e0b;
+    --pb-soft-surface-a: rgba(51, 65, 85, 0.1);
+    --pb-soft-surface-b: rgba(148, 163, 184, 0.1);
+}
+
+/* Cobertura dashboard: Articulos, Categorias, Productos, Proveedores, Unidades, Mesas, Compras */
+.admin-crud-shell button:not(.plain-btn),
+.articulos-shell button:not(.plain-btn),
+.categorias-view button:not(.plain-btn),
+.productos-view button:not(.plain-btn),
+.proveedores-view button:not(.plain-btn),
+.unidades-view button:not(.plain-btn),
+.mesas-view button:not(.plain-btn),
+.compras-view button:not(.plain-btn),
+.informe-caja-view button:not(.plain-btn),
+.ficha-tecnica button:not(.plain-btn),
+.kitchen-shell button:not(.plain-btn),
+.pb-btn,
+.admin-crud-primary-btn,
+.btn-modal-save,
+.btn-modal-cancel,
+.btn-primary-action,
+.btn-secondary-action,
+.btn-upload-file,
+.pb-btn-unified,
+.btn-tablet-edit,
+.btn-tablet-danger,
+.btn-modal-danger,
+.pb-btn-modal-toggle,
+.btn-comanda-edit,
+.btn-comanda-delete {
+    border-radius: var(--pb-btn-radius) !important;
+    border: 1px solid var(--pb-btn-border) !important;
+    box-shadow:
+      var(--pb-btn-shadow-1),
+      var(--pb-btn-shadow-2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    transition:
+      transform var(--pb-btn-transition),
+      box-shadow var(--pb-btn-transition),
+      filter var(--pb-btn-transition),
+      background var(--pb-btn-transition),
+      color var(--pb-btn-transition) !important;
+    will-change: transform, box-shadow !important;
+}
+
+.pb-btn,
+.admin-crud-primary-btn,
+.btn-modal-save,
+.btn-modal-cancel,
+.btn-primary-action,
+.btn-secondary-action,
+.btn-upload-file,
+.pb-btn-unified,
+.btn-modal-danger,
+.pb-btn-modal-toggle,
+.btn-comanda-edit,
+.btn-comanda-delete {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+}
+
+.pb-btn i,
+.admin-crud-primary-btn i,
+.btn-modal-save i,
+.btn-modal-cancel i,
+.btn-primary-action i,
+.btn-secondary-action i,
+.btn-upload-file i,
+.pb-btn-unified i,
+.btn-tablet-edit i,
+.btn-tablet-danger i,
+.btn-modal-danger i,
+.pb-btn-modal-toggle i,
+.btn-comanda-edit i,
+.btn-comanda-delete i {
+    margin-right: 10px !important;
+    font-size: 0.95em !important;
+    line-height: 1 !important;
+}
+
+.admin-crud-shell button:not(.plain-btn):hover,
+.articulos-shell button:not(.plain-btn):hover,
+.categorias-view button:not(.plain-btn):hover,
+.productos-view button:not(.plain-btn):hover,
+.proveedores-view button:not(.plain-btn):hover,
+.unidades-view button:not(.plain-btn):hover,
+.mesas-view button:not(.plain-btn):hover,
+.compras-view button:not(.plain-btn):hover,
+.pb-btn:hover,
+.admin-crud-primary-btn:hover,
+.btn-modal-save:hover,
+.btn-modal-cancel:hover,
+.btn-primary-action:hover,
+.btn-secondary-action:hover,
+.btn-upload-file:hover,
+.pb-btn-unified:hover,
+.btn-tablet-edit:hover,
+.btn-tablet-danger:hover,
+.btn-modal-danger:hover,
+.pb-btn-modal-toggle:hover,
+.btn-comanda-edit:hover,
+.btn-comanda-delete:hover {
+    transform: translateY(-2px) !important;
+    filter: brightness(1.06) saturate(1.05) !important;
+}
+
+.admin-crud-shell button:not(.plain-btn):active,
+.articulos-shell button:not(.plain-btn):active,
+.categorias-view button:not(.plain-btn):active,
+.productos-view button:not(.plain-btn):active,
+.proveedores-view button:not(.plain-btn):active,
+.unidades-view button:not(.plain-btn):active,
+.mesas-view button:not(.plain-btn):active,
+.compras-view button:not(.plain-btn):active,
+.pb-btn:active,
+.admin-crud-primary-btn:active,
+.btn-modal-save:active,
+.btn-modal-cancel:active,
+.btn-primary-action:active,
+.btn-secondary-action:active,
+.btn-upload-file:active,
+.pb-btn-unified:active,
+.btn-tablet-edit:active,
+.btn-tablet-danger:active,
+.btn-modal-danger:active,
+.pb-btn-modal-toggle:active,
+.btn-comanda-edit:active,
+.btn-comanda-delete:active {
+    transform: translateY(1px) !important;
+    box-shadow: inset 0 3px 9px rgba(30, 41, 59, 0.12) !important;
+}
+
+/* ================================
+   ALERTAS REALTIME
+================================ */
+
+.animacion-flash {
+    animation: pbFlashPulse 1.1s ease-in-out 2;
+}
+
+@keyframes pbFlashPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.48);
+        transform: translateY(0);
+    }
+    45% {
+        box-shadow: 0 0 0 10px rgba(251, 191, 36, 0.08);
+        transform: translateY(-1px);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+        transform: translateY(0);
+    }
+}
+
+.mesa-alerta-caja {
+    border-color: #fdba74 !important;
+    background: #fff7ed !important;
+}
+
+.mesa-disponible-live {
+    border-color: #cbd5e1 !important;
+    background: #f8fafc !important;
+}
+
+.pb-btn:disabled,
+.admin-crud-primary-btn:disabled,
+.btn-modal-save:disabled,
+.btn-modal-cancel:disabled,
+.btn-primary-action:disabled,
+.btn-secondary-action:disabled,
+.btn-upload-file:disabled,
+.pb-btn-unified:disabled,
+.btn-tablet-edit:disabled,
+.btn-tablet-danger:disabled,
+.btn-modal-danger:disabled,
+.pb-btn-modal-toggle:disabled,
+.btn-comanda-edit:disabled,
+.btn-comanda-delete:disabled {
+    opacity: 0.62 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    cursor: not-allowed !important;
+}
+
+/* Variantes Material 3 tonal por intención */
+.pb-btn-new,
+.btn-modal-save,
+.admin-crud-primary-btn,
+.admin-crud-shell button[class*="btn-modal-save"],
+.admin-crud-shell button[class*="bg-emerald"],
+.informe-caja-view button[class*="btn-modal-save"],
+.informe-caja-view button[class*="bg-emerald"] {
+    background: linear-gradient(135deg, var(--pb-soft-new-a), var(--pb-soft-new-b)) !important;
+    color: #ecfdf5 !important;
+}
+
+.pb-btn-consult,
+.pb-btn-primary,
+.btn-primary-action,
+.admin-crud-shell button[class*="bg-indigo"],
+.admin-crud-shell button[class*="bg-blue"],
+.informe-caja-view button[class*="bg-indigo"],
+.informe-caja-view button[class*="bg-blue"] {
+    background: linear-gradient(135deg, var(--pb-soft-consult-a), var(--pb-soft-consult-b)) !important;
+    color: #eef2ff !important;
+}
+
+.pb-btn-export,
+.pb-btn-pdf,
+.pb-btn-excel,
+.admin-crud-shell button[class*="bg-cyan"],
+.informe-caja-view button[class*="bg-cyan"],
+.ficha-tecnica button[class*="bg-cyan"] {
+    background: linear-gradient(135deg, var(--pb-soft-export-a), var(--pb-soft-export-b)) !important;
+    color: #ecfeff !important;
+}
+
+.pb-btn-print,
+.admin-crud-shell button[class*="bg-slate-8"],
+.admin-crud-shell button[class*="bg-zinc"],
+.informe-caja-view button[class*="bg-slate-8"],
+.informe-caja-view button[class*="bg-zinc"] {
+    background: linear-gradient(135deg, var(--pb-soft-print-a), var(--pb-soft-print-b)) !important;
+    color: #f8fafc !important;
+}
+
+.pb-btn-edit,
+.btn-tablet-edit,
+.btn-comanda-edit,
+.admin-crud-shell button[class*="bg-orange"],
+.admin-crud-shell button[class*="bg-amber"],
+.informe-caja-view button[class*="bg-orange"],
+.informe-caja-view button[class*="bg-amber"],
+.ficha-tecnica button[class*="bg-amber"] {
+    background: linear-gradient(135deg, var(--pb-soft-edit-a), var(--pb-soft-edit-b)) !important;
+    color: #fff7ed !important;
+}
+
+.pb-btn-danger,
+.btn-tablet-danger,
+.btn-modal-danger,
+.btn-comanda-delete,
+.admin-crud-shell button[class*="bg-rose"],
+.admin-crud-shell button[class*="bg-red"],
+.informe-caja-view button[class*="bg-rose"],
+.informe-caja-view button[class*="bg-red"],
+.ficha-tecnica button[class*="bg-rose"] {
+    background: linear-gradient(135deg, var(--pb-soft-danger-a), var(--pb-soft-danger-b)) !important;
+    color: #fff1f2 !important;
+}
+
+.pb-btn-warn,
+.admin-crud-shell button[class*="bg-yellow"],
+.informe-caja-view button[class*="bg-yellow"],
+.ficha-tecnica button[class*="bg-yellow"] {
+    background: linear-gradient(135deg, var(--pb-soft-warn-a), var(--pb-soft-warn-b)) !important;
+    color: #fffbeb !important;
+}
+
+.pb-btn-secondary,
+.btn-modal-cancel,
+.btn-secondary-action,
+.btn-upload-file,
+.admin-crud-shell button[class*="btn-modal-cancel"],
+.admin-crud-shell button[class*="bg-slate-1"],
+.informe-caja-view button[class*="btn-modal-cancel"],
+.informe-caja-view button[class*="bg-slate-1"] {
+    background: linear-gradient(135deg, var(--pb-soft-surface-a), var(--pb-soft-surface-b)) !important;
+    color: #334155 !important;
+    border-color: rgba(148, 163, 184, 0.34) !important;
+}
+
+/* Estandar global: boton "Mes Actual" para filtros por fecha. */
+.pb-btn-month-current {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    border-radius: 1rem !important;
+    border: 1px solid #a5f3fc !important;
+    background: #ecfeff !important;
+    color: #0f766e !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    transition: all 0.2s ease !important;
+}
+
+.pb-btn-month-current:hover {
+    background: #cffafe !important;
+    border-color: #67e8f9 !important;
+    color: #0f766e !important;
+}
+
+.pb-btn-month-current:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    filter: none !important;
+}
+
+.pb-btn-month-current i {
+    margin-right: 0 !important;
+    font-size: 0.9em !important;
+}
+
+/* Estandar global: botones editar/borrar al tamano de Categorias (px-4 py-2). */
+.pb-btn.pb-btn-edit,
+.pb-btn.pb-btn-danger {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+}
+
+/* Variante tablet: mismo look, pero mas delgada para vistas tactiles compactas. */
+.pb-btn.btn-tablet-edit,
+.pb-btn.btn-tablet-danger {
+    padding: 0.25rem 0.625rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+}
+
+/* Unificacion de botones en ventanas modales (misma estructura visual pb-btn). */
+.pb-btn-modal,
+.pb-btn-unified,
+.btn-upload-file,
+.btn-modal-cancel,
+.btn-modal-save,
+.btn-modal-danger,
+.pb-btn-modal-toggle {
+    min-height: 2.5rem !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+}
+
+/* ================================
+   FORMATO DE VALORES NUMÉRICOS
+================================ */
+
+.num-entero {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums !important;
+    font-feature-settings: "tnum" 1 !important;
+    font-weight: 600 !important;
+}
+
+.num-entero.num-currency {
+    color: #334155 !important;
+}
+
+.num-entero.num-positive {
+    color: #059669 !important;
+}
+
+.num-entero.num-negative {
+    color: #dc2626 !important;
+}
+
+/* Ocultar las flechas (spinners) de los inputs de tipo number */
+input[type=number].no-spinners::-webkit-inner-spin-button,
+input[type=number].no-spinners::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number].no-spinners {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+

@@ -1,0 +1,15 @@
+# Normalización de texto: LF en repositorio
+* text=auto eol=lf
+
+# Binarios: no normalizar (evita corrupción accidental)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

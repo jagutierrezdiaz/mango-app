@@ -1,0 +1,27 @@
+node_modules/
+**/node_modules/
+backend/node_modules/
+frontend/node_modules/
+.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Archivos del sistema y de editor
+.vscode/
+.copilot/
+.DS_Store
+Thumbs.db
+dist/
+frontend/dist/
+build/
+*.log
+
+# Certificados locales de desarrollo
+*.pem
+
+# Archivos temporales
+.tmp-*
+
+logs/*.txt
+logs/*.log
+logs_audit/

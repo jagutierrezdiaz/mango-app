@@ -1,0 +1,36 @@
+{
+  "name": "patio-bohemio-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "serve": "vue-cli-service serve --host 0.0.0.0",
+    "build": "vue-cli-service build",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.20",
+    "@fullcalendar/daygrid": "^6.1.20",
+    "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/timegrid": "^6.1.20",
+    "@fullcalendar/vue3": "^6.1.20",
+    "chart.js": "^4.5.1",
+    "element-plus": "^2.13.7",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-vue-next": "^0.577.0",
+    "pinia": "^3.0.4",
+    "sweetalert2": "^11.26.24",
+    "vue": "^3.5.30",
+    "vue-router": "^4.6.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^5.0.9",
+    "@vue/cli-service": "^5.0.9",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^8.0.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^3.4.19"
+  }
+}

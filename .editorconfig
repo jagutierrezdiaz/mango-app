@@ -1,0 +1,15 @@
+# Convenciones de codificación y finales de línea — Patio Bohemio
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{vue,js,jsx,ts,tsx,json,md,css,scss,html,yml,yaml}]
+charset = utf-8
+end_of_line = lf
+
+[*.md]
+trim_trailing_whitespace = false

@@ -1,0 +1,63 @@
+{
+  "name": "patio-bohemio-app",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "kill:ports": "powershell -Command \"$ports = @($env:VUE_APP_DEV_BACKEND_PORT, $env:VUE_APP_DEV_FRONTEND_PORT) | Where-Object { $_ } | ForEach-Object { [int]$_ }; if (-not $ports.Count) { $ports = @(3000, 5173) }; foreach ($port in ($ports | Select-Object -Unique)) { Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force } }\"",
+    "backend": "node src/server.js",
+    "dev": "npm run backend",
+    "vue:serve": "powershell -Command \"$port = if ($env:VUE_APP_DEV_FRONTEND_PORT) { $env:VUE_APP_DEV_FRONTEND_PORT } else { '5173' }; vue-cli-service serve --host 0.0.0.0 --https false --port $port\"",
+    "build": "vue-cli-service build",
+    "postinstall": "npm install --prefix frontend",
+    "local-bridge:install": "npm install --prefix local-bridge",
+    "local-bridge": "node local-bridge/server.js"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.20",
+    "@fullcalendar/daygrid": "^6.1.20",
+    "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/timegrid": "^6.1.20",
+    "@fullcalendar/vue3": "^6.1.20",
+    "@vue/cli-service": "^5.0.9",
+    "axios": "^1.18.0",
+    "bcrypt": "^5.1.1",
+    "chart.js": "^4.5.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "element-plus": "^2.13.7",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "html2canvas": "^1.4.1",
+    "ioredis": "^5.10.1",
+    "jsonwebtoken": "^9.0.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-vue-next": "^0.577.0",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.22.5",
+    "peer": "^1.0.2",
+    "peerjs": "^1.5.5",
+    "pinia": "^3.0.4",
+    "sweetalert2": "^11.26.24",
+    "vue": "^3.5.30",
+    "vue-router": "^4.6.4",
+    "ws": "^8.20.0",
+    "xlsx": "^0.18.5"
+  },
+  "description": "Sistema de gestión para Patio Bohemio",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jagutierrezdiaz/patio-bohemio-app.git"
+  },
+  "author": "JA Gutierrez Diaz",
+  "license": "ISC",
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^5.0.9",
+    "autoprefixer": "^10.4.27",
+    "cross-port-killer": "^1.4.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^3.4.19",
+    "taskkill": "^5.0.0"
+  }
+}
