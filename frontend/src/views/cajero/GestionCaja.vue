@@ -1,5 +1,5 @@
 <template>
-  <div class="cash-shell min-h-[calc(100vh-2rem)] p-4 md:p-6 lg:p-8">
+  <div class="cash-shell flex h-full w-screen flex-col overflow-hidden px-0 ml-[calc(-50vw+50%)]">
     <button
       v-if="showAudioAlert"
       type="button"
@@ -10,60 +10,114 @@
       🔔 Haga clic aquí para activar sonidos
     </button>
 
-    <section class="cash-hero mb-6 rounded-3xl p-5 md:p-7">
-      <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-        <div class="space-y-2">
-          <p class="text-[10px] uppercase tracking-[0.22em] font-bold text-rose-100/80">Panel de caja</p>
-          <h2 class="cash-title text-3xl md:text-4xl text-white font-extrabold leading-tight">Gestion de Caja</h2>
-          <p class="text-sm text-rose-100/80 max-w-2xl">
-            Selecciona una comanda lista para cobro, valida el pago y genera el ticket imprimible para 80 mm o PDF.
-          </p>
+    <section
+      class="cash-banner shrink-0 mb-0 px-4 py-3 md:px-6 grid items-center gap-x-3 overflow-hidden"
+      style="grid-template-columns: minmax(0, 1fr) minmax(0, 2.75fr) minmax(0, 1fr)"
+      data-ui="CashBanner"
+    >
+      <!-- Izquierda: marca + contador -->
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="flex items-center gap-2 shrink-0">
+          <div class="shrink-0 flex items-center justify-center h-9 w-9 rounded-xl bg-white/15 border border-white/25">
+            <i class="fas fa-cash-register text-white text-sm"></i>
+          </div>
+          <div class="hidden sm:block">
+            <p class="text-[9px] uppercase tracking-[0.2em] font-black text-rose-200/80 leading-none">Patio Bohemio</p>
+            <p class="text-xs font-black uppercase tracking-wide text-white leading-tight">Gestión de Caja</p>
+          </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div class="flex flex-col gap-2 w-full sm:w-auto">
-            <button
-              type="button"
-              class="quick-expense-btn inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-amber-900 transition hover:bg-amber-100"
-              @click="abrirGastoCaja"
-            >
-              <i class="fas fa-receipt"></i>
-              <span>Registrar Gasto de Caja</span>
-            </button>
+        <span class="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-white/90 shrink-0">
+          <i class="fas fa-receipt text-[9px]"></i>
+          {{ comandas.length }} comanda(s)
+        </span>
+      </div>
 
-            <button
-              type="button"
-              class="quick-arqueo-btn inline-flex items-center justify-center gap-2 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-teal-900 transition hover:bg-teal-100"
-              @click="abrirRealizarArqueo"
-            >
-              <i class="fas fa-calculator"></i>
-              <span>Realizar Arqueo de Caja</span>
-            </button>
-          </div>
+      <!-- Centro: acciones -->
+      <div class="cash-header-center min-w-0 overflow-hidden py-1">
+        <!-- <h2 class="cash-title text-xl md:text-2xl text-white font-extrabold leading-none tracking-tight text-center whitespace-nowrap">
+          Gestión de Caja
+        </h2> -->
 
-          <div class="user-chip rounded-2xl p-3.5 flex items-center gap-3 border border-white/20 bg-white/10 backdrop-blur-sm">
-            <div class="h-12 w-12 rounded-xl overflow-hidden border-2 border-rose-200/40 bg-slate-100 shrink-0">
-              <img
-                :src="getPersonalImageUrl(cashierProfile.url_foto, cashierDisplayName)"
-                :alt="cashierDisplayName"
-                class="h-full w-full object-cover"
-                @error="handleImageError"
-              >
-            </div>
-            <div>
-              <p class="text-[10px] uppercase tracking-[0.18em] text-rose-100/80 font-bold">Turno activo</p>
-              <p class="text-white font-black text-sm uppercase">{{ cashierDisplayName }}</p>
-              <p class="text-[10px] font-bold uppercase tracking-wider text-rose-100">{{ cashierDisplayRole }}</p>
-            </div>
+        <div class="cash-header-actions" data-ui="HeaderAccionesCaja">
+          <button
+            type="button"
+            class="cash-hero-btn cash-hero-btn--compact"
+            :class="activeTab === 'mesa' ? 'cash-hero-btn--tab-active' : 'cash-hero-btn--tab-inactive'"
+            data-ui="TabSwitcher"
+            @click="activeTab = 'mesa'"
+          >
+            <i class="fas fa-utensils"></i>
+            <span>Servicio a la Mesa</span>
+          </button>
+          <button
+            type="button"
+            class="cash-hero-btn cash-hero-btn--compact"
+            :class="activeTab === 'mostrador' ? 'cash-hero-btn--tab-active' : 'cash-hero-btn--tab-inactive'"
+            data-ui="TabSwitcher"
+            @click="activeTab = 'mostrador'"
+          >
+            <i class="fas fa-store"></i>
+            <span>Atención Mostrador</span>
+          </button>
+          <button
+            type="button"
+            class="cash-hero-btn cash-hero-btn--compact cash-hero-btn--amber"
+            @click="abrirGastoCaja"
+          >
+            <i class="fas fa-receipt"></i>
+            <span>Registrar Gasto de Caja</span>
+          </button>
+          <button
+            type="button"
+            class="cash-hero-btn cash-hero-btn--compact cash-hero-btn--teal"
+            @click="abrirRealizarArqueo"
+          >
+            <i class="fas fa-calculator"></i>
+            <span>Realizar Arqueo de Caja</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Derecha: usuario + salir -->
+      <div class="flex items-center justify-end gap-2">
+        <div class="user-chip rounded-xl px-2.5 py-1.5 flex items-center gap-2 border border-white/20 bg-white/10 backdrop-blur-sm">
+          <div class="h-8 w-8 rounded-lg overflow-hidden border border-rose-200/40 bg-slate-100 shrink-0">
+            <img
+              :src="getPersonalImageUrl(cashierProfile.url_foto, cashierDisplayName)"
+              :alt="cashierDisplayName"
+              class="h-full w-full object-cover"
+              @error="handleImageError"
+            >
           </div>
+          <div>
+            <p class="text-white font-black text-xs uppercase leading-none">{{ cashierDisplayName }}</p>
+            <p class="text-[9px] font-bold uppercase tracking-wider text-rose-200/80 leading-tight mt-0.5">{{ cashierDisplayRole }}</p>
+          </div>
+          <button
+            type="button"
+            class="ml-1 inline-flex items-center gap-1 rounded-lg border border-white/20 bg-white/15 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white transition hover:bg-white/25"
+            @click="logout"
+          >
+            <i class="fas fa-sign-out-alt text-[9px]"></i>
+            <span>Salir</span>
+          </button>
         </div>
       </div>
     </section>
 
     <!-- [SECCION] LayoutPrincipalCaja -->
-    <section class="grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-5" data-ui="LayoutPrincipalCaja">
-      <!-- [SECCION] ListaComandas (Columna izquierda) -->
-      <aside class="xl:col-span-3 panel rounded-3xl p-3 md:p-4 max-h-[70vh] overflow-y-auto" data-ui="ListaComandas">
+    <section class="cash-content-area min-h-0 flex-1 overflow-hidden px-2 md:px-3 lg:px-2 xl:px-2 pt-4 pb-2">
+      <div class="cash-layout-grid grid h-full min-h-0 grid-cols-1 gap-4 md:gap-5 xl:grid-cols-12" data-ui="LayoutPrincipalCaja">
+      <!-- [SECCION] TabContentArea -->
+      <div class="cash-tab-area min-h-0 overflow-hidden xl:col-span-9" data-ui="TabContentArea">
+        <!-- [SECCION] TabServicioMesa -->
+        <div v-show="activeTab === 'mesa'" class="cash-tab-pane h-full min-h-0" data-ui="TabServicioMesa">
+          <h3 class="cash-title shrink-0 text-lg font-black uppercase tracking-wide text-slate-800 mb-4">Servicio a la Mesa</h3>
+
+          <div class="cash-tab-body grid h-full min-h-0 grid-cols-1 gap-4 md:gap-5 xl:grid-cols-9" data-ui="GridTabMesa">
+            <!-- [SECCION] ListaComandas (Columna izquierda) -->
+            <aside class="cash-panel-scroll panel min-h-0 rounded-3xl p-3 md:p-4 xl:col-span-3" data-ui="ListaComandas">
         <div
           v-if="solicitudesPendientes.length"
           class="mb-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5"
@@ -128,12 +182,12 @@
             </button>
           </article>
         </div>
-      </aside>
+            </aside>
 
-      <!-- [SECCION] ContenedorPrincipalComanda (Seccion central) -->
-      <main class="xl:col-span-6 panel rounded-3xl p-4 md:p-5 min-h-[70vh]" data-ui="ContenedorPrincipalComanda">
+            <!-- [SECCION] ContenedorPrincipalComanda (Seccion central) -->
+            <main class="cash-panel-scroll panel flex min-h-0 flex-col rounded-3xl p-4 md:p-5 xl:col-span-6" data-ui="ContenedorPrincipalComanda">
         <template v-if="!selectedComanda">
-          <div class="h-full min-h-[56vh] rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 flex items-center justify-center p-6 text-center">
+          <div class="flex h-full min-h-0 flex-1 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center">
             <div>
               <i class="fas fa-cash-register text-4xl text-slate-300 mb-4"></i>
               <p class="text-sm font-bold uppercase tracking-widest text-slate-500">Selecciona una Comanda</p>
@@ -144,10 +198,10 @@
 
         <template v-else>
           <!-- [SECCION] GridInternoComandaSeleccionada -->
-          <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 mb-4" style="align-items: start;">
+          <div class="grid h-full min-h-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:grid-rows-1" style="align-items: start;" data-ui="GridInternoComandaSeleccionada">
 
             <!-- [SECCION] ColumnaIzquierdaComanda: EncabezadoCliente + DetalleProductos -->
-            <div class="xl:col-span-8 flex flex-col gap-4" data-ui="DetalleComandaColumna">
+            <div class="flex min-h-0 flex-col gap-4 xl:col-span-8" data-ui="DetalleComandaColumna">
 
               <!-- [SECCION] EncabezadoClienteComanda -->
               <header class="rounded-2xl border border-slate-200 bg-rose-50/80 p-3 md:p-4" data-ui="EncabezadoClienteComanda">
@@ -175,7 +229,7 @@
               </header>
 
               <!-- [SECCION] DetalleProductos -->
-              <section class="rounded-2xl border border-slate-200 bg-white p-4 flex-1" data-ui="DetalleProductos">
+              <section class="cash-panel-scroll flex min-h-0 flex-1 flex-col rounded-2xl border border-slate-200 bg-white p-4" data-ui="DetalleProductos">
                 <div class="flex items-center justify-between gap-3 mb-3">
                   <p class="text-[10px] uppercase tracking-widest font-black text-slate-500">Detalle de Comanda</p>
                   <span class="badge border-slate-200 bg-slate-50 text-slate-700">{{ (selectedComanda.detalles || []).length }} item(s)</span>
@@ -212,7 +266,7 @@
             </div>
 
             <!-- [SECCION] PanelAccionesPago (Subseccion derecha de la central) -->
-            <aside class="xl:col-span-4 rounded-2xl border border-slate-200 bg-white p-4 self-start xl:sticky xl:top-4" data-ui="PanelAccionesPago">
+            <aside class="shrink-0 rounded-2xl border border-slate-200 bg-white p-4 xl:col-span-4" data-ui="PanelAccionesPago">
               <!-- [ELEMENTO] LogoPanelPago -->
               <div class="flex justify-center mb-6">
                 <img src="/img/logo.png" alt="Logo Patio Bohemio" class="h-14 w-auto object-contain panel-pago-logo" @error="handleImageError">
@@ -257,10 +311,206 @@
           </div>
         </template>
 
-      </main>
+            </main>
+          </div>
+        </div>
+
+        <!-- [SECCION] TabAtencionMostrador -->
+        <div v-show="activeTab === 'mostrador'" class="cash-tab-pane h-full min-h-0" data-ui="TabAtencionMostrador">
+          <h3 class="cash-title shrink-0 text-lg font-black uppercase tracking-wide text-slate-800 mb-4">Atención Mostrador</h3>
+
+          <div v-if="!mostradorCatalogReady" class="flex flex-1 items-center justify-center py-10">
+            <div class="h-10 w-10 rounded-full border-2 border-orange-500 border-t-transparent animate-spin"></div>
+          </div>
+
+          <main v-else class="cash-tab-body panel flex min-h-0 flex-col rounded-3xl p-4 md:p-5" data-ui="ContenedorComandaMostrador">
+            <div class="grid h-full min-h-0 grid-cols-1 gap-4 xl:grid-cols-12" style="align-items: start;">
+
+              <!-- [SECCION] DetalleComandaMostrador -->
+              <div class="flex h-full min-h-0 flex-col gap-4 overflow-hidden xl:col-span-8" data-ui="DetalleComandaMostrador">
+
+                <!-- [SECCION] EncabezadoComandaMostrador + BuscadorProductosMostrador -->
+                <header class="rounded-2xl border border-slate-200 bg-orange-50/80 p-2.5 md:p-3" data-ui="EncabezadoComandaMostrador">
+                  <div class="mostrador-header-stack">
+                    <div class="mostrador-header-meta">
+                      <div class="mostrador-mesa-row">
+                        <label class="text-[10px] uppercase tracking-widest font-black text-orange-800 shrink-0" for="mostrador-mesa-select">Mesa</label>
+                        <select
+                          id="mostrador-mesa-select"
+                          v-model.number="mesaSeleccionadaMostrador"
+                          class="mostrador-mesa-select mostrador-mesa-select--header"
+                          :disabled="savingMostrador || Boolean(comandaIdMostradorGuardada)"
+                        >
+                          <option v-for="mesa in mesasMostrador" :key="mesa.id" :value="Number(mesa.id)">
+                            {{ mesa.nombre }}
+                          </option>
+                        </select>
+                      </div>
+                      <span class="badge border-orange-200 bg-white text-orange-700 uppercase shrink-0">{{ comandaMostrador.cliente_nombre || 'Consumidor final' }}</span>
+                      <span class="badge border-slate-200 bg-white text-slate-700 uppercase shrink-0">{{ comandaMostrador.id ? `Comanda #${comandaMostrador.id}` : 'Comanda Mostrador' }}</span>
+                      <p v-if="comandaMostrador.fecha_hora" class="mostrador-header-fecha text-[11px] font-semibold text-slate-500 shrink-0">{{ formatDateTime(comandaMostrador.fecha_hora) }}</p>
+                    </div>
+
+                    <div class="mostrador-search-wrap" data-ui="BuscadorProductosMostrador">
+                      <i class="fas fa-search mostrador-search-icon"></i>
+                      <input
+                        ref="mostradorSearchInputRef"
+                        v-model="busquedaMostrador"
+                        type="text"
+                        class="mostrador-search-input"
+                        placeholder="Buscar producto o categoría…"
+                        autocomplete="off"
+                      >
+                      <button v-if="busquedaMostrador" type="button" class="mostrador-clear-btn" @click="busquedaMostrador = ''">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                </header>
+
+                <!-- [SECCION] DetalleProductosMostrador -->
+                <section class="rounded-2xl border border-slate-200 bg-white p-4 flex-1 flex flex-col min-h-0" data-ui="DetalleProductosMostrador">
+                  <div class="flex items-center justify-between gap-3 mb-3">
+                    <p class="text-[10px] uppercase tracking-widest font-black text-slate-500">Detalle de Comanda</p>
+                    <span class="badge border-slate-200 bg-slate-50 text-slate-700">{{ productosSeleccionadosMostrador.length }} item(s)</span>
+                  </div>
+
+                  <div class="mostrador-detalle-body flex-1 min-h-0 overflow-y-auto">
+                    <template v-if="busquedaMostrador.trim()">
+                      <p v-if="!productosFiltradosMostrador.length" class="mostrador-empty-msg">
+                        Sin resultados para "{{ busquedaMostrador }}"
+                      </p>
+                      <article
+                        v-for="p in productosFiltradosMostrador"
+                        :key="`busq-${p.id}`"
+                        class="mostrador-producto-card"
+                      >
+                        <img
+                          class="mostrador-producto-img"
+                          :src="getProductoImageUrl(p.url_foto, p.nombre)"
+                          :alt="p.nombre"
+                          @error="handleImageError"
+                        >
+                        <div class="mostrador-producto-info">
+                          <strong class="mostrador-producto-nombre">{{ p.nombre }}</strong>
+                          <span class="mostrador-producto-precio">{{ formatCurrency(p.precio_unitario || 0) }}</span>
+                        </div>
+                        <div class="mostrador-stepper">
+                          <button type="button" class="mostrador-stepper-btn" @click="decrementarMostrador(p)">
+                            <i class="fas fa-minus"></i>
+                          </button>
+                          <strong class="mostrador-stepper-qty">{{ getCantidadMostrador(p.id) }}</strong>
+                          <button type="button" class="mostrador-stepper-btn" @click="incrementarMostrador(p)">
+                            <i class="fas fa-plus"></i>
+                          </button>
+                        </div>
+                      </article>
+                    </template>
+
+                    <p class="mostrador-section-label">Productos en la comanda</p>
+                    <div v-if="!productosSeleccionadosMostrador.length" class="mostrador-empty-msg">
+                      Busca productos y agrégalos con el botón +.
+                    </div>
+                    <article
+                      v-for="entry in productosSeleccionadosMostrador"
+                      :key="`sel-${entry.producto_id}`"
+                      class="mostrador-selected-card"
+                    >
+                      <img
+                        class="mostrador-producto-img"
+                        :src="getProductoImageUrl(entry.producto.url_foto, entry.producto.nombre)"
+                        :alt="entry.producto.nombre"
+                        @error="handleImageError"
+                      >
+                      <div class="mostrador-selected-grid">
+                        <div class="mostrador-producto-copy mostrador-producto-copy--truncate">
+                          <strong class="mostrador-producto-nombre">{{ entry.producto.nombre }}</strong>
+                          <span class="mostrador-producto-precio">{{ entry.item.cantidad }} × {{ formatCurrency(entry.item.precio_unitario || 0) }}</span>
+                        </div>
+                        <div class="mostrador-stepper mostrador-stepper--grid">
+                          <button type="button" class="mostrador-stepper-btn" @click="decrementarMostrador(entry.producto)">
+                            <i class="fas fa-minus"></i>
+                          </button>
+                          <strong class="mostrador-stepper-qty">{{ getCantidadMostrador(entry.producto_id) }}</strong>
+                          <button type="button" class="mostrador-stepper-btn" @click="incrementarMostrador(entry.producto)">
+                            <i class="fas fa-plus"></i>
+                          </button>
+                        </div>
+                        <div class="mostrador-obs-wrap">
+                          <label class="mostrador-obs-label">Observaciones</label>
+                          <textarea
+                            v-model="entry.item.observaciones_mesero"
+                            class="mostrador-obs-input"
+                            rows="1"
+                            maxlength="255"
+                            placeholder="Ej: sin azucar, leche deslactosada"
+                          ></textarea>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+
+                  <div class="mostrador-footer pt-4 mt-3 border-t border-slate-200">
+                    <button
+                      type="button"
+                      class="mostrador-footer-btn"
+                      :disabled="savingMostrador || !puedeGuardarMostrador"
+                      @click="onGuardarMostrador"
+                    >
+                      <i v-if="savingMostrador" class="fas fa-circle-notch fa-spin"></i>
+                      <i v-else class="fas fa-check"></i>
+                      <span>{{ saveButtonLabelMostrador }}</span>
+                    </button>
+                  </div>
+                </section>
+              </div>
+
+                <!-- [SECCION] PanelAccionesPagoMostrador -->
+                <aside class="shrink-0 rounded-2xl border border-slate-200 bg-white p-4 xl:col-span-4" data-ui="PanelAccionesPagoMostrador">
+                  <div class="flex justify-center mb-6">
+                    <img src="/img/logo.png" alt="Logo Patio Bohemio" class="h-14 w-auto object-contain panel-pago-logo" @error="handleImageError">
+                  </div>
+
+                  <p class="text-[10px] uppercase tracking-widest font-black text-slate-500">Totales</p>
+                  <div class="mt-3 space-y-2 text-sm">
+                    <div class="flex items-center justify-between font-semibold text-slate-700">
+                      <span>Subtotal</span>
+                      <span class="num-value">{{ formatCurrency(comandaMostrador.total_sin_servicio) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between font-semibold text-slate-700">
+                      <span>Servicio voluntario</span>
+                      <span class="num-value">{{ formatCurrency(comandaMostrador.servicio_voluntario) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-200 text-base font-black text-orange-700">
+                      <span>Total</span>
+                      <span class="num-value">{{ formatCurrency(totalFinalPagoMostrador) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                    <p class="text-[10px] uppercase tracking-widest font-black text-slate-500">Metodo sugerido</p>
+                    <p class="mt-1 text-xl font-black text-slate-800">{{ comandaMostrador.forma_pago || 'Efectivo' }}</p>
+                  </div>
+
+                  <div class="mt-4 flex flex-col gap-3">
+                    <button type="button" class="btn-comanda-pdf btn-comanda-pay-cta w-full justify-center" @click="imprimirPrecuenta">
+                      <i class="fas fa-money-bill-wave"></i>
+                      <span>PRECUENTA</span>
+                    </button>
+                    <button type="button" class="btn-comanda-edit btn-comanda-pay-cta w-full justify-center" @click="abrirPago">
+                      <i class="fas fa-money-bill-wave"></i>
+                      <span>Pagar</span>
+                    </button>
+                  </div>
+                </aside>
+
+            </div>
+          </main>
+        </div>
+      </div>
 
       <!-- [SECCION] HistorialOperacion (Columna derecha independiente / Flujo de Caja Real) -->
-      <aside class="xl:col-span-3 panel rounded-3xl p-4 md:p-5 h-full max-h-[70vh] overflow-y-auto xl:sticky xl:top-4" data-ui="HistorialOperacion">
+      <aside class="cash-panel-scroll cash-historial-panel panel min-h-0 rounded-3xl p-4 md:p-5 xl:col-span-3" data-ui="HistorialOperacion">
         <div class="flex flex-col gap-3 mb-3">
           <div>
             <p class="text-[10px] uppercase tracking-widest font-black text-slate-500">Operacion diaria</p>
@@ -328,6 +578,7 @@
           </article>
         </div>
       </aside>
+      </div>
     </section>
 
     <div v-if="showGastoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn p-3 md:p-4">
@@ -421,7 +672,7 @@
         <div class="bg-rose-700 p-4 md:p-5 text-white flex justify-between items-center sticky top-0 z-20">
           <div>
             <h3 class="text-sm font-black uppercase tracking-[0.2em] italic">Registrar Pago</h3>
-            <p class="text-[11px] font-semibold text-rose-100 mt-1">Mesa {{ selectedComanda?.mesa_id }} · {{ selectedComanda?.cliente_nombre || 'Consumidor final' }}</p>
+            <p class="text-[11px] font-semibold text-rose-100 mt-1">Mesa {{ comandaEnCobro?.mesa_id }} · {{ comandaEnCobro?.cliente_nombre || 'Consumidor final' }}</p>
           </div>
           <button @click="cerrarPago" class="btn-icon-text text-rose-100 hover:text-white hover:bg-rose-600 rounded-lg px-2 py-1 transition-colors text-[10px] font-black uppercase tracking-wide">
             <i class="fas fa-times"></i>
@@ -435,19 +686,19 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
                   <p class="label-mini">Mesa</p>
-                  <p class="value-strong">{{ selectedComanda?.mesa_id }} - {{ selectedComanda?.mesa_nombre }}</p>
+                  <p class="value-strong">{{ comandaEnCobro?.mesa_id }} - {{ comandaEnCobro?.mesa_nombre }}</p>
                 </div>
                 <div>
                   <p class="label-mini">Comanda</p>
-                  <p class="value-strong">#{{ selectedComanda?.id }}</p>
+                  <p class="value-strong">#{{ comandaEnCobro?.id }}</p>
                 </div>
                 <div>
                   <p class="label-mini">Cliente</p>
-                  <p class="value-strong">{{ selectedComanda?.cliente_nombre || 'Consumidor final' }}</p>
+                  <p class="value-strong">{{ comandaEnCobro?.cliente_nombre || 'Consumidor final' }}</p>
                 </div>
                 <div>
                   <p class="label-mini">Fecha</p>
-                  <p class="value-strong">{{ formatDateTime(selectedComanda?.fecha_hora) }}</p>
+                  <p class="value-strong">{{ formatDateTime(comandaEnCobro?.fecha_hora) }}</p>
                 </div>
               </div>
             </article>
@@ -455,7 +706,7 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-3 space-y-3">
               <div>
                 <label class="label-mini block mb-2">Subtotal</label>
-                <div class="summary-box num-value">{{ formatCurrency(selectedComanda?.total_sin_servicio || 0) }}</div>
+                <div class="summary-box num-value">{{ formatCurrency(comandaEnCobro?.total_sin_servicio || 0) }}</div>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -588,12 +839,14 @@
 </template>
 
 <script>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores';
 import { API_BASE_URL as API_BASE, buildApiUrl } from '../../config/api.js';
 import { businessInfo } from '../../config/businessInfo.js';
 import { buildPrecuentaHtml, buildTicketHtml } from '../../utils/ticketTemplates.js';
 import { cajaService } from '../../services/cajaService.js';
+import { agruparDetallesPorProducto, comandasService } from '../../services/comandasService.js';
 import { openCashDrawerBridge } from '../../services/cashDrawerBridge.js';
 import { createSocketDeduper } from '../../utils/socketEventDedup.js';
 import { SOCKET_EVENTS } from '../../constants/socketEvents.js';
@@ -616,6 +869,7 @@ export default {
     CrearArqueo
   },
   setup() {
+    const router = useRouter();
     const authStore = useAuthStore();
     const currentUser = computed(() => authStore.user || null);
     const cashierProfile = ref({
@@ -647,6 +901,235 @@ export default {
     const totalFlujoHoy = ref(0);
     const showAudioAlert = ref(false);
     const activatingAudio = ref(false);
+    const activeTab = ref('mesa');
+    const pagoOrigen = ref('mesa');
+    const mesasMostrador = ref([]);
+    const productosActivosMostrador = ref([]);
+    const categoriasMostrador = ref([]);
+    const aporteServicioMostrador = ref({ valor_parametro: 0, tipo_dato: 'porcentaje' });
+    const mostradorCatalogReady = ref(false);
+    const loadingMostradorCatalog = ref(false);
+    const comandaMostrador = ref({
+      id: null,
+      fecha_hora: null,
+      cliente_nombre: 'Consumidor Final',
+      mesa_id: 1,
+      mesa_nombre: null,
+      detalles: [],
+      total_sin_servicio: 0,
+      servicio_voluntario: 0,
+      total_final: 0,
+      forma_pago: 'Efectivo',
+      estado_comanda: null
+    });
+
+    const busquedaMostrador = ref('');
+    const productosTempMostrador = ref({});
+    const savingMostrador = ref(false);
+    const comandaIdMostradorGuardada = ref(0);
+    const guardadoExitosoMostrador = ref(false);
+    const mostradorSearchInputRef = ref(null);
+    const mesaSeleccionadaMostrador = ref(1);
+
+    const syncMesaDefaultMostrador = (mesas = []) => {
+      const list = Array.isArray(mesas) ? mesas : [];
+      if (!list.length) return;
+      const mesaUno = list.find((mesa) => Number(mesa.id) === 1);
+      mesaSeleccionadaMostrador.value = Number((mesaUno || list[0]).id);
+    };
+
+    watch(mesasMostrador, (mesas) => {
+      if (!comandaIdMostradorGuardada.value) syncMesaDefaultMostrador(mesas);
+    });
+
+    const catNombreMapMostrador = computed(() => {
+      const map = {};
+      (categoriasMostrador.value || []).forEach((c) => {
+        map[c.id] = String(c.nombre || '').toLowerCase();
+      });
+      return map;
+    });
+
+    const productosFiltradosMostrador = computed(() => {
+      const q = busquedaMostrador.value.trim().toLowerCase();
+      if (!q) return [];
+      return (productosActivosMostrador.value || []).filter((p) => {
+        const byNombre = String(p.nombre || '').toLowerCase().includes(q);
+        const byCat = catNombreMapMostrador.value[p.categoria_id]?.includes(q) || false;
+        return byNombre || byCat;
+      });
+    });
+
+    const productosByIdMostrador = computed(() => {
+      const map = {};
+      (productosActivosMostrador.value || []).forEach((p) => {
+        map[Number(p.id)] = p;
+      });
+      return map;
+    });
+
+    const productosSeleccionadosMostrador = computed(() =>
+      Object.entries(productosTempMostrador.value)
+        .map(([productoId, item]) => ({
+          producto_id: Number(productoId),
+          item,
+          producto: productosByIdMostrador.value[Number(productoId)] || {
+            id: Number(productoId),
+            nombre: item.nombre || 'Producto',
+            url_foto: null
+          }
+        }))
+        .sort((a, b) => String(a.producto.nombre || '').localeCompare(String(b.producto.nombre || ''), 'es', { sensitivity: 'base' }))
+    );
+
+    const hayProductosMostrador = computed(() => productosSeleccionadosMostrador.value.length > 0);
+
+    const puedeGuardarMostrador = computed(() => {
+      if (!mesaSeleccionadaMostrador.value) return false;
+      if (hayProductosMostrador.value) return true;
+      return Boolean(comandaIdMostradorGuardada.value);
+    });
+
+    const saveButtonLabelMostrador = computed(() => {
+      if (savingMostrador.value) return 'GUARDANDO...';
+      return guardadoExitosoMostrador.value ? 'ACTUALIZAR COMANDA' : 'CREAR COMANDA Y GUARDAR';
+    });
+
+    const getCantidadMostrador = (productoId) => Number(productosTempMostrador.value[productoId]?.cantidad || 0);
+
+    const incrementarMostrador = (producto) => {
+      const cur = getCantidadMostrador(producto.id);
+      productosTempMostrador.value = {
+        ...productosTempMostrador.value,
+        [producto.id]: {
+          cantidad: cur + 1,
+          precio_unitario: Number(producto.precio_unitario || 0),
+          nombre: producto.nombre,
+          detalle_id: Number(productosTempMostrador.value[producto.id]?.detalle_id || 0) || null,
+          observaciones_mesero: cur > 0
+            ? String(productosTempMostrador.value[producto.id]?.observaciones_mesero || '')
+            : ''
+        }
+      };
+    };
+
+    const decrementarMostrador = (producto) => {
+      const cur = getCantidadMostrador(producto.id);
+      if (cur <= 0) return;
+      if (cur === 1) {
+        const clone = { ...productosTempMostrador.value };
+        delete clone[producto.id];
+        productosTempMostrador.value = clone;
+        return;
+      }
+      productosTempMostrador.value = {
+        ...productosTempMostrador.value,
+        [producto.id]: {
+          cantidad: cur - 1,
+          precio_unitario: Number(producto.precio_unitario || 0),
+          nombre: producto.nombre,
+          detalle_id: Number(productosTempMostrador.value[producto.id]?.detalle_id || 0) || null,
+          observaciones_mesero: String(productosTempMostrador.value[producto.id]?.observaciones_mesero || '')
+        }
+      };
+    };
+
+    const onGuardarMostrador = async () => {
+      if (savingMostrador.value || !puedeGuardarMostrador.value) return;
+
+      savingMostrador.value = true;
+      try {
+        const items = Object.entries(productosTempMostrador.value)
+          .map(([productoId, item]) => ({
+            detalle_id: Number(item.detalle_id || 0) || null,
+            producto_id: Number(productoId),
+            cantidad: Number(item.cantidad || 0),
+            observaciones_mesero: String(item.observaciones_mesero || '').trim() || null
+          }))
+          .filter((i) => i.cantidad > 0);
+
+        const detalleIdsEnBorrador = new Set(
+          items.map((i) => Number(i.detalle_id || 0)).filter(Boolean)
+        );
+        const detallesEliminar = (comandaMostrador.value.detalles || [])
+          .map((d) => Number(d.id))
+          .filter((id) => id > 0 && !detalleIdsEnBorrador.has(id));
+
+        const persistResult = await guardarComandaMostrador({
+          comanda_id: Number(comandaIdMostradorGuardada.value || 0) || null,
+          mesa_id: Number(mesaSeleccionadaMostrador.value || 0),
+          estado_comanda: 'En Proceso',
+          prioridad: 'Media',
+          detalles: items,
+          detallesEliminar
+        });
+
+        const persistedComandaId = Number(persistResult?.comanda_id || 0);
+        if (persistedComandaId) {
+          comandaIdMostradorGuardada.value = persistedComandaId;
+        }
+
+        const persistedDetalles = Array.isArray(persistResult?.detallesPersistidos)
+          ? persistResult.detallesPersistidos
+          : [];
+
+        if (persistedDetalles.length) {
+          const clone = { ...productosTempMostrador.value };
+          persistedDetalles.forEach((d) => {
+            const productoId = Number(d.producto_id || 0);
+            if (!productoId || !clone[productoId]) return;
+
+            clone[productoId] = {
+              ...clone[productoId],
+              detalle_id: Number(d.detalle_id || 0) || null,
+              observaciones_mesero: d.observaciones_mesero === null || d.observaciones_mesero === undefined
+                ? String(clone[productoId].observaciones_mesero || '')
+                : String(d.observaciones_mesero)
+            };
+          });
+          productosTempMostrador.value = clone;
+        }
+
+        guardadoExitosoMostrador.value = true;
+
+        if (persistedComandaId) {
+          await onComandaMostradorGuardada(persistedComandaId);
+        }
+      } catch (_error) {
+        // guardarComandaMostrador ya notifica errores
+      } finally {
+        savingMostrador.value = false;
+      }
+    };
+
+    const resetComandaMostrador = () => {
+      comandaMostrador.value = {
+        id: null,
+        fecha_hora: null,
+        cliente_nombre: 'Consumidor Final',
+        mesa_id: 1,
+        mesa_nombre: null,
+        detalles: [],
+        total_sin_servicio: 0,
+        servicio_voluntario: 0,
+        total_final: 0,
+        forma_pago: 'Efectivo',
+        estado_comanda: null
+      };
+      busquedaMostrador.value = '';
+      productosTempMostrador.value = {};
+      comandaIdMostradorGuardada.value = 0;
+      guardadoExitosoMostrador.value = false;
+      syncMesaDefaultMostrador(mesasMostrador.value);
+    };
+
+    const comandaActivaTab = computed(() => (
+      activeTab.value === 'mostrador' ? comandaMostrador.value : selectedComanda.value
+    ));
+
+    const comandaEnCobro = computed(() => (
+      pagoOrigen.value === 'mostrador' ? comandaMostrador.value : selectedComanda.value
+    ));
 
     const gastoForm = ref({
       monto: '',
@@ -775,8 +1258,12 @@ export default {
 
     const aporteServicioPorcentaje = ref(0); // editable via teclado
 
+    const resolveComandaPago = () => (
+      showPagoModal.value ? comandaEnCobro.value : selectedComanda.value
+    );
+
     const servicioVoluntarioCalculado = computed(() => {
-      const subtotal = Number(selectedComanda.value?.total_sin_servicio) || 0;
+      const subtotal = Number(resolveComandaPago()?.total_sin_servicio) || 0;
       return roundMoney(subtotal * (aporteServicioPorcentaje.value / 100));
     });
 
@@ -790,14 +1277,161 @@ export default {
     });
 
     const totalFinalPago = computed(() => {
-      // Forzamos que el subtotal sea número
-      const subtotal = Number(selectedComanda.value?.total_sin_servicio) || 0;
-      
-      // Forzamos que el servicio sea número, si es "" o null, será 0
+      const comanda = showPagoModal.value ? comandaEnCobro.value : selectedComanda.value;
+      const subtotal = Number(comanda?.total_sin_servicio) || 0;
       const servicio = Number(servicioVoluntarioEditable.value) || 0;
-      
-      // Retornamos el redondeo absoluto
       return Math.round(subtotal + servicio);
+    });
+
+    const totalFinalPagoMostrador = computed(() => {
+      const subtotal = Number(comandaMostrador.value?.total_sin_servicio) || 0;
+      const servicio = Number(comandaMostrador.value?.servicio_voluntario) || 0;
+      const totalFromApi = Number(comandaMostrador.value?.total_final);
+      if (Number.isFinite(totalFromApi) && totalFromApi > 0) return Math.round(totalFromApi);
+      return Math.round(subtotal + servicio);
+    });
+
+    const cargarCatalogoMostrador = async () => {
+      if (loadingMostradorCatalog.value) return;
+      loadingMostradorCatalog.value = true;
+      try {
+        const [mesas, productos, categorias, aporte] = await Promise.all([
+          cajaService.getMesasMostrador(),
+          cajaService.getProductosActivosMostrador(),
+          cajaService.getCategoriasMostrador(),
+          comandasService.getAporteServicio()
+        ]);
+        mesasMostrador.value = Array.isArray(mesas) ? mesas : [];
+        productosActivosMostrador.value = Array.isArray(productos) ? productos : [];
+        categoriasMostrador.value = Array.isArray(categorias) ? categorias : [];
+        aporteServicioMostrador.value = aporte || { valor_parametro: 0, tipo_dato: 'porcentaje' };
+        if (!comandaIdMostradorGuardada.value) syncMesaDefaultMostrador(mesasMostrador.value);
+        mostradorCatalogReady.value = true;
+      } catch (error) {
+        console.warn('No se pudo cargar el catalogo de mostrador:', error);
+        window.dispatchEvent(new CustomEvent('pb:notify-ui', {
+          detail: { message: error.message || 'No se pudo cargar el catalogo de mostrador.', type: 'error' }
+        }));
+      } finally {
+        loadingMostradorCatalog.value = false;
+      }
+    };
+
+    const guardarComandaMostrador = async ({ comanda_id, mesa_id, estado_comanda, prioridad, detalles, detallesEliminar = [] }) => {
+      try {
+        let resolvedComandaId = Number(comanda_id || 0);
+        let createdNow = false;
+
+        if (!resolvedComandaId) {
+          const created = await cajaService.createComandaMostrador({
+            mesa_id: Number(mesa_id || 1),
+            cliente_nombre: 'Consumidor Final',
+            datos_cliente: null,
+            estado_comanda: estado_comanda || 'En Proceso',
+            prioridad: prioridad || 'Media'
+          });
+          resolvedComandaId = Number(created?.id || 0);
+          createdNow = Boolean(resolvedComandaId);
+        }
+
+        if (!resolvedComandaId) {
+          throw new Error('No se pudo resolver la comanda para guardar los productos.');
+        }
+
+        const detailRows = Array.isArray(detalles) ? detalles : [];
+        const detallesPersistidos = [];
+        let hadNewItems = false;
+        let hadDeletedItems = false;
+
+        const idsEliminar = Array.isArray(detallesEliminar)
+          ? [...new Set(detallesEliminar.map((id) => Number(id)).filter((id) => id > 0))]
+          : [];
+
+        for (const detalleId of idsEliminar) {
+          await cajaService.deleteDetalleMostrador(detalleId);
+          hadDeletedItems = true;
+        }
+
+        const rowsToUpdate = detailRows.filter((d) => Number(d?.detalle_id || 0) > 0);
+        const rowsToInsert = agruparDetallesPorProducto(
+          detailRows.filter((d) => !Number(d?.detalle_id || 0))
+        );
+
+        for (const d of rowsToUpdate) {
+          const detalleId = Number(d.detalle_id);
+          const updated = await cajaService.updateDetalleMostrador(detalleId, {
+            cantidad: Number(d?.cantidad || 0),
+            observaciones_mesero: d?.observaciones_mesero ?? null
+          });
+          detallesPersistidos.push({
+            detalle_id: Number(updated?.id || detalleId),
+            producto_id: Number(updated?.producto_id || d?.producto_id || 0),
+            observaciones_mesero: updated?.observaciones_mesero ?? d?.observaciones_mesero
+          });
+        }
+
+        for (const d of rowsToInsert) {
+          const createdDetalle = await cajaService.addDetalleMostrador(resolvedComandaId, {
+            producto_id: Number(d?.producto_id || 0),
+            cantidad: Number(d?.cantidad || 0),
+            observaciones_mesero: d?.observaciones_mesero ?? null
+          });
+          detallesPersistidos.push({
+            detalle_id: Number(createdDetalle?.id || 0),
+            producto_id: Number(createdDetalle?.producto_id || d?.producto_id || 0),
+            observaciones_mesero: createdDetalle?.observaciones_mesero ?? d?.observaciones_mesero
+          });
+          hadNewItems = true;
+        }
+
+        const successMessage = createdNow
+          ? 'Comanda de mostrador creada correctamente.'
+          : hadNewItems
+            ? 'Productos agregados a la comanda.'
+            : hadDeletedItems
+              ? 'Comanda de mostrador actualizada correctamente.'
+              : 'Observaciones actualizadas correctamente.';
+
+        window.dispatchEvent(new CustomEvent('pb:notify-ui', {
+          detail: {
+            message: successMessage,
+            type: 'success'
+          }
+        }));
+
+        return {
+          comanda_id: resolvedComandaId,
+          detallesPersistidos,
+          createdNow
+        };
+      } catch (error) {
+        window.dispatchEvent(new CustomEvent('pb:notify-ui', {
+          detail: { message: error.message || 'Error al guardar comanda de mostrador', type: 'error' }
+        }));
+        throw error;
+      }
+    };
+
+    const onComandaMostradorGuardada = async (comandaId) => {
+      const fresh = await cajaService.getComandaMostradorById(comandaId);
+      if (!fresh) return;
+      comandaMostrador.value = {
+        ...fresh,
+        cliente_nombre: fresh.cliente_nombre || 'Consumidor Final',
+        forma_pago: fresh.forma_pago || 'Efectivo',
+        estado_comanda: fresh.estado_comanda || 'En Proceso'
+      };
+    };
+
+    watch(activeTab, (tab) => {
+      if (tab === 'mostrador' && !mostradorCatalogReady.value) {
+        cargarCatalogoMostrador();
+      }
+      if (tab === 'mostrador' && mostradorCatalogReady.value) {
+        nextTick(() => {
+          if (mostradorSearchInputRef.value) mostradorSearchInputRef.value.focus();
+        });
+      }
     });
 
     // --- Habilita campos según el método de pago seleccionado ---
@@ -921,15 +1555,51 @@ export default {
       activeField.value = field;
     };
 
-    const abrirPago = () => {
-      // --- Inicializa los campos de pago en 0 al abrir la ventana modal de pago ---
-      const pct = Number(selectedComanda.value?.aporte_servicio_porcentaje) || 0;
+    const abrirPago = async () => {
+      const esMostrador = activeTab.value === 'mostrador';
+      pagoOrigen.value = esMostrador ? 'mostrador' : 'mesa';
+
+      const comanda = esMostrador ? comandaMostrador.value : selectedComanda.value;
+      if (!comanda?.id) {
+        window.dispatchEvent(new CustomEvent('pb:notify-ui', {
+          detail: { message: 'Debes guardar la comanda antes de registrar el pago.', type: 'warning' }
+        }));
+        return;
+      }
+
+      if (!(comanda.detalles || []).length) {
+        window.dispatchEvent(new CustomEvent('pb:notify-ui', {
+          detail: { message: 'La comanda no tiene productos para cobrar.', type: 'warning' }
+        }));
+        return;
+      }
+
+      if (esMostrador && comanda.estado_comanda !== 'Cerrada') {
+        try {
+          const cerrada = await cajaService.cerrarComandaMostrador(comanda.id);
+          comandaMostrador.value = {
+            ...cerrada,
+            cliente_nombre: cerrada?.cliente_nombre || 'Consumidor Final',
+            forma_pago: cerrada?.forma_pago || 'Efectivo'
+          };
+        } catch (error) {
+          window.dispatchEvent(new CustomEvent('pb:notify-ui', {
+            detail: { message: error.message || 'No se pudo cerrar la comanda de mostrador.', type: 'error' }
+          }));
+          return;
+        }
+      }
+
+      const comandaCobro = comandaEnCobro.value;
+      const pct = Number(comandaCobro?.aporte_servicio_porcentaje)
+        || Number(aporteServicioMostrador.value?.valor_parametro)
+        || 0;
       aporteServicioPorcentaje.value = roundMoney(pct);
       servicioVoluntarioOverride.value = null;
       payment.value = {
-        metodo_pago: 'Efectivo',
-        monto_efectivo: 0,         // Siempre inicia en 0
-        monto_transferencia: 0,    // Siempre inicia en 0
+        metodo_pago: comandaCobro?.forma_pago || 'Efectivo',
+        monto_efectivo: 0,
+        monto_transferencia: 0,
         notas: ''
       };
       setKeypadFocus('monto_efectivo');
@@ -949,6 +1619,7 @@ export default {
     const cerrarPago = () => {
       showPagoModal.value = false;
       savingPago.value = false;
+      pagoOrigen.value = 'mesa';
     };
 
     const abrirRealizarArqueo = () => {
@@ -963,6 +1634,11 @@ export default {
       cargarCaja({ silent: true });
       cargarMovimientosHoy({ silent: true });
       cerrarRealizarArqueo();
+    };
+
+    const logout = async () => {
+      await authStore.logout();
+      router.push('/login');
     };
 
     const parseFieldValue = (value) => {
@@ -1015,7 +1691,7 @@ export default {
           servicioVoluntarioOverride.value = parseFieldValue(next);
         }
         // Recalcular porcentaje desde los pesos editados
-        const subtotal = Number(selectedComanda.value?.total_sin_servicio) || 0;
+        const subtotal = Number(comandaEnCobro.value?.total_sin_servicio) || 0;
         if (subtotal > 0) {
           aporteServicioPorcentaje.value = roundMoney((servicioVoluntarioOverride.value / subtotal) * 100);
         }
@@ -1059,10 +1735,16 @@ export default {
 
 
     const imprimirPrecuenta = () => {
-      if (!selectedComanda.value) return;
+      const comanda = comandaActivaTab.value;
+      if (!comanda?.id || !(comanda.detalles || []).length) {
+        window.dispatchEvent(new CustomEvent('pb:notify-ui', {
+          detail: { message: 'No hay productos en la comanda para imprimir precuenta.', type: 'warning' }
+        }));
+        return;
+      }
 
       const html = buildPrecuentaHtml(
-        selectedComanda.value,
+        comanda,
         businessInfo,
         logoDataUrl.value || COMPANY_LOGO_URL,
         { getMeseroNombre, skipAutoPrint: true }
@@ -1101,7 +1783,8 @@ export default {
     };
 
     const registrarPago = async () => {
-      if (!selectedComanda.value?.id) return;
+      const comanda = comandaEnCobro.value;
+      if (!comanda?.id) return;
       if (totalRecibido.value < totalFinalPago.value) {
         await Swal.fire({
           icon: 'error',
@@ -1147,7 +1830,7 @@ export default {
 
       savingPago.value = true;
       try {
-        const paidComandaId = Number(selectedComanda.value.id);
+        const paidComandaId = Number(comanda.id);
         const data = await cajaService.registrarPago({
           comanda_id: paidComandaId,
           arqueo_id: null,
@@ -1167,9 +1850,14 @@ export default {
           });
         }
 
-        comandas.value = comandas.value.filter((item) => Number(item.id) !== paidComandaId);
-        solicitudesPendientes.value = solicitudesPendientes.value.filter((item) => Number(item.id_comanda) !== paidComandaId);
-        selectedComanda.value = null;
+        if (pagoOrigen.value === 'mostrador') {
+          resetComandaMostrador();
+        } else {
+          comandas.value = comandas.value.filter((item) => Number(item.id) !== paidComandaId);
+          solicitudesPendientes.value = solicitudesPendientes.value.filter((item) => Number(item.id_comanda) !== paidComandaId);
+          selectedComanda.value = null;
+        }
+        pagoOrigen.value = 'mesa';
         cerrarPago();
 
         // El pago ya fue registrado; si el refresco de lista falla, no se debe bloquear al cajero.
@@ -1351,6 +2039,29 @@ export default {
       totalFlujoHoy,
       showAudioAlert,
       activatingAudio,
+      activeTab,
+      mesasMostrador,
+      productosActivosMostrador,
+      categoriasMostrador,
+      aporteServicioMostrador,
+      mostradorCatalogReady,
+      comandaMostrador,
+      comandaEnCobro,
+      mesaSeleccionadaMostrador,
+      comandaIdMostradorGuardada,
+      busquedaMostrador,
+      productosFiltradosMostrador,
+      productosSeleccionadosMostrador,
+      hayProductosMostrador,
+      puedeGuardarMostrador,
+      saveButtonLabelMostrador,
+      savingMostrador,
+      getCantidadMostrador,
+      incrementarMostrador,
+      decrementarMostrador,
+      onGuardarMostrador,
+      totalFinalPagoMostrador,
+      onComandaMostradorGuardada,
       cargarCaja,
       cargarMovimientosHoy,
       seleccionarComanda,
@@ -1385,7 +2096,8 @@ export default {
       showArqueoModal,
       abrirRealizarArqueo,
       cerrarRealizarArqueo,
-      onArqueoCreated
+      onArqueoCreated,
+      logout
     };
   }
 };
@@ -1401,8 +2113,59 @@ export default {
     radial-gradient(circle at 8% 8%, rgba(190, 24, 93, 0.12) 0, transparent 34%),
     radial-gradient(circle at 88% 8%, rgba(244, 114, 182, 0.16) 0, transparent 28%),
     linear-gradient(180deg, var(--bg-a), var(--bg-b));
-  border-radius: 2rem;
   font-family: 'Manrope', sans-serif;
+}
+.cash-content-area {
+  flex: 1;
+  min-height: 0;
+}
+.cash-layout-grid {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 28vh);
+}
+.cash-tab-area {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.cash-tab-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.cash-tab-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-rows: minmax(0, 34vh) minmax(0, 1fr);
+}
+.cash-panel-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.cash-historial-panel {
+  min-height: 0;
+}
+@media (min-width: 1280px) {
+  .cash-layout-grid {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .cash-tab-body {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .cash-historial-panel {
+    max-height: none;
+  }
+}
+[data-ui='ContenedorComandaMostrador'] > .grid {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+@media (min-width: 1280px) {
+  [data-ui='ContenedorComandaMostrador'] > .grid {
+    grid-template-rows: minmax(0, 1fr);
+  }
 }
 .audio-alert-btn {
   position: fixed;
@@ -1418,15 +2181,110 @@ export default {
   font-weight: 900;
   letter-spacing: 0.04em;
 }
-.cash-hero {
+.cash-banner {
   background:
     linear-gradient(135deg, rgba(80, 7, 36, 0.96), rgba(190, 24, 93, 0.9)),
     radial-gradient(circle at 85% 22%, rgba(251, 207, 232, 0.35), transparent 48%);
-  box-shadow: 0 24px 60px rgba(190, 24, 93, 0.18);
+  box-shadow: 0 4px 20px rgba(190, 24, 93, 0.28);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-.quick-expense-btn { box-shadow: 0 18px 30px rgba(245, 158, 11, 0.22); }
-.quick-arqueo-btn { box-shadow: 0 18px 30px rgba(13, 148, 136, 0.22); }
 .cash-title { font-family: 'Sora', sans-serif; letter-spacing: -0.02em; }
+.cash-header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.cash-header-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.cash-hero-btn--compact {
+  width: 100%;
+  min-width: 0;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.3rem;
+  font-size: clamp(5px, 0.42vw + 4px, 8px);
+  letter-spacing: 0.04em;
+  border-radius: 0.625rem;
+  text-align: center;
+  line-height: 1.1;
+  gap: 0.25rem;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+}
+.cash-hero-btn--compact span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.cash-hero-btn--compact i {
+  font-size: clamp(7px, 0.5vw + 4px, 9px);
+  flex-shrink: 0;
+}
+.cash-hero-btn--compact.cash-hero-btn--tab-active,
+.cash-hero-btn--compact.cash-hero-btn--tab-inactive,
+.cash-hero-btn--compact.cash-hero-btn--amber,
+.cash-hero-btn--compact.cash-hero-btn--teal {
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+.cash-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.cash-hero-btn--tab-active {
+  border-color: rgba(190, 24, 93, 0.35);
+  background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+  color: #9f1239;
+  box-shadow: 0 10px 24px rgba(190, 24, 93, 0.14);
+}
+.cash-hero-btn--tab-inactive {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.72);
+  color: #64748b;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+.cash-hero-btn--tab-inactive:hover {
+  background: #fff;
+  color: #334155;
+}
+.cash-hero-btn--amber {
+  border-color: rgba(251, 191, 36, 0.7);
+  background: #fffbeb;
+  color: #92400e;
+  box-shadow: 0 18px 30px rgba(245, 158, 11, 0.22);
+}
+.cash-hero-btn--amber:hover {
+  background: #fef3c7;
+}
+.cash-hero-btn--teal {
+  border-color: rgb(153 246 228);
+  background: #f0fdfa;
+  color: #134e4a;
+  box-shadow: 0 18px 30px rgba(13, 148, 136, 0.22);
+}
+.cash-hero-btn--teal:hover {
+  background: #ccfbf1;
+}
 .panel {
   background: var(--panel);
   border: 1px solid rgba(148, 163, 184, 0.28);
@@ -1524,4 +2382,199 @@ export default {
 }
 
 @media (max-width: 1280px) { .cash-shell { border-radius: 1.5rem; } }
+
+/* Tab Atención Mostrador */
+.mostrador-mesa-select {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #fdba74;
+  border-radius: 0.85rem;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #7c2d12;
+  background: #fff;
+  outline: none;
+}
+.mostrador-mesa-select:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: #fff7ed;
+}
+.mostrador-header-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.mostrador-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.mostrador-mesa-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.mostrador-mesa-select--header {
+  width: auto;
+  min-width: 5.5rem;
+  max-width: 9rem;
+}
+.mostrador-header-fecha {
+  margin: 0;
+  white-space: nowrap;
+}
+.mostrador-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(254, 215, 170, 0.75);
+}
+.mostrador-search-icon { color: #ea580c; font-size: 0.9rem; }
+.mostrador-search-input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font-size: 0.84rem;
+  color: #0f172a;
+  outline: none;
+}
+.mostrador-clear-btn {
+  border: 0;
+  background: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+}
+.mostrador-detalle-body {
+  flex: 1;
+  min-height: 0;
+}
+.mostrador-empty-msg {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  padding: 1rem;
+}
+.mostrador-section-label {
+  margin: 0.7rem 0 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #c2410c;
+}
+.mostrador-producto-card,
+.mostrador-selected-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.mostrador-producto-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 0.55rem;
+  object-fit: cover;
+  background: #f1f5f9;
+  flex-shrink: 0;
+}
+.mostrador-producto-info { flex: 1; min-width: 0; }
+.mostrador-producto-nombre {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.mostrador-producto-precio {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ea580c;
+}
+.mostrador-selected-grid {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-areas: 'copy stepper' 'obs obs';
+  column-gap: 0.7rem;
+  row-gap: 0.18rem;
+}
+.mostrador-producto-copy { grid-area: copy; min-width: 0; }
+.mostrador-producto-copy--truncate .mostrador-producto-nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mostrador-obs-wrap { grid-area: obs; width: 100%; }
+.mostrador-obs-label {
+  display: block;
+  margin-bottom: 0.14rem;
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #475569;
+}
+.mostrador-obs-input {
+  width: 100%;
+  resize: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.36rem 0.5rem;
+  font-size: 0.72rem;
+}
+.mostrador-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.mostrador-stepper--grid { grid-area: stepper; justify-self: end; }
+.mostrador-stepper-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid #fdba74;
+  background: #fff7ed;
+  color: #c2410c;
+  cursor: pointer;
+}
+.mostrador-stepper-qty {
+  min-width: 1.2rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.mostrador-footer-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 0.9rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fff;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  cursor: pointer;
+}
+.mostrador-footer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 </style>

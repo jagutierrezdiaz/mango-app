@@ -9,6 +9,17 @@ import {
   debugCajaSchema
 } from '../controllers/cajaController.js';
 import {
+  getMesasMostrador,
+  getProductosActivosMostrador,
+  getCategoriasMostrador,
+  createComandaMostrador,
+  getComandaMostradorById,
+  addDetalleMostrador,
+  updateDetalleMostrador,
+  deleteDetalleMostrador,
+  cerrarComandaMostrador
+} from '../controllers/cajaMostradorController.js';
+import {
   getIngresos,
   getIngresoById,
   getResumenIngresos,
@@ -38,6 +49,15 @@ router.get('/comandas/:id', guard(['CAJERO', 'CAJERO(A)']), getComandaCajaById);
 router.post('/pagos', guard(['CAJERO', 'CAJERO(A)']), registrarPagoCaja);
 router.get('/movimientos-hoy', guard(['CAJERO', 'CAJERO(A)', 'Administrador']), getMovimientosCajaHoy);
 router.post('/gastos', guard(['CAJERO', 'CAJERO(A)']), registrarGastoCaja);
+router.get('/mostrador/mesas', guard(['CAJERO', 'CAJERO(A)']), getMesasMostrador);
+router.get('/mostrador/productos-activos', guard(['CAJERO', 'CAJERO(A)']), getProductosActivosMostrador);
+router.get('/mostrador/categorias', guard(['CAJERO', 'CAJERO(A)']), getCategoriasMostrador);
+router.post('/mostrador/comandas', guard(['CAJERO', 'CAJERO(A)']), createComandaMostrador);
+router.get('/mostrador/comandas/:id', guard(['CAJERO', 'CAJERO(A)']), getComandaMostradorById);
+router.post('/mostrador/comandas/:id/detalles', guard(['CAJERO', 'CAJERO(A)']), addDetalleMostrador);
+router.patch('/mostrador/comandas/:id/cerrar', guard(['CAJERO', 'CAJERO(A)']), cerrarComandaMostrador);
+router.put('/mostrador/detalles/:id', guard(['CAJERO', 'CAJERO(A)']), updateDetalleMostrador);
+router.delete('/mostrador/detalles/:id', guard(['CAJERO', 'CAJERO(A)']), deleteDetalleMostrador);
 router.get('/debug/esquema-caja', guard(['Administrador']), debugCajaSchema);
 
 // Rutas de informe de caja (Admin)

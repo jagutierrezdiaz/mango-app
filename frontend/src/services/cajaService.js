@@ -67,5 +67,77 @@ export const cajaService = {
     }, 'No se pudo conectar para registrar el gasto de caja.');
     const result = await parseResult(response, 'No se pudo registrar el gasto de caja.');
     return result.data;
+  },
+
+  async getMesasMostrador() {
+    const response = await safeFetch(`${API_BASE}/caja/mostrador/mesas`, { headers: authHeaders() }, 'No se pudo conectar para cargar mesas.');
+    const result = await parseResult(response, 'No se pudieron cargar las mesas.');
+    return Array.isArray(result.data) ? result.data : [];
+  },
+
+  async getProductosActivosMostrador() {
+    const response = await safeFetch(`${API_BASE}/caja/mostrador/productos-activos`, { headers: authHeaders() }, 'No se pudo conectar para cargar productos.');
+    const result = await parseResult(response, 'No se pudieron cargar los productos.');
+    return Array.isArray(result.data) ? result.data : [];
+  },
+
+  async getCategoriasMostrador() {
+    const response = await safeFetch(`${API_BASE}/caja/mostrador/categorias`, { headers: authHeaders() }, 'No se pudo conectar para cargar categorias.');
+    const result = await parseResult(response, 'No se pudieron cargar las categorias.');
+    return Array.isArray(result.data) ? result.data : [];
+  },
+
+  async createComandaMostrador(payload) {
+    const response = await safeFetch(`${API_BASE}/caja/mostrador/comandas`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
+    }, 'No se pudo conectar para crear la comanda.');
+    const result = await parseResult(response, 'No se pudo crear la comanda de mostrador.');
+    return result.data || null;
+  },
+
+  async getComandaMostradorById(id) {
+    const response = await safeFetch(`${API_BASE}/caja/mostrador/comandas/${id}`, { headers: authHeaders() }, 'No se pudo conectar con la comanda.');
+    const result = await parseResult(response, 'No se pudo cargar la comanda de mostrador.');
+    return result.data || null;
+  },
+
+  async addDetalleMostrador(comandaId, detalle) {
+    const response = await safeFetch(`${API_BASE}/caja/mostrador/comandas/${comandaId}/detalles`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(detalle)
+    }, 'No se pudo conectar para agregar el producto.');
+    const result = await parseResult(response, 'No se pudo agregar el producto.');
+    return result.data || null;
+  },
+
+  async updateDetalleMostrador(detalleId, detalle) {
+    const response = await safeFetch(`${API_BASE}/caja/mostrador/detalles/${detalleId}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify(detalle)
+    }, 'No se pudo conectar para actualizar el detalle.');
+    const result = await parseResult(response, 'No se pudo actualizar el detalle.');
+    return result.data || null;
+  },
+
+  async deleteDetalleMostrador(detalleId) {
+    const response = await safeFetch(`${API_BASE}/caja/mostrador/detalles/${detalleId}`, {
+      method: 'DELETE',
+      headers: authHeaders()
+    }, 'No se pudo conectar para eliminar el detalle.');
+    const result = await parseResult(response, 'No se pudo eliminar el detalle.');
+    return result.data || null;
+  },
+
+  async cerrarComandaMostrador(comandaId) {
+    const response = await safeFetch(`${API_BASE}/caja/mostrador/comandas/${comandaId}/cerrar`, {
+      method: 'PATCH',
+      headers: authHeaders()
+    }, 'No se pudo conectar para cerrar la comanda.');
+    const result = await parseResult(response, 'No se pudo cerrar la comanda de mostrador.');
+    return result.data || null;
   }
 };

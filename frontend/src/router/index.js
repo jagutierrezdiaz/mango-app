@@ -8,6 +8,7 @@ const CocineroLayout = () => import('../views/CocineroLayout.vue')
 const ProgramaCocina = () => import('../views/cocinero/ProgramaCocina.vue')
 const CajeroLayout = () => import('../views/CajeroLayout.vue')
 const GestionCaja = () => import('../views/cajero/GestionCaja.vue')
+const GestionMostrador = () => import('../views/cajero/GestionMostrador.vue')
 const SoporteRemoto = () => import('../views/SoporteRemoto.vue')
 const PanelModulos = () => import('../views/PanelModulos.vue')
 const TrasladosDinero = () => import('../views/TrasladosDinero.vue')
@@ -191,6 +192,12 @@ const routes = [
     path: '/panel',
     name: 'PanelModulos',
     component: PanelModulos,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/cajero/mostrador',
+    name: 'GestionMostrador',
+    component: GestionMostrador,
     meta: { requiresAuth: false }
   },
   {

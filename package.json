@@ -6,7 +6,8 @@
   "scripts": {
     "kill:ports": "powershell -Command \"$ports = @($env:VUE_APP_DEV_BACKEND_PORT, $env:VUE_APP_DEV_FRONTEND_PORT) | Where-Object { $_ } | ForEach-Object { [int]$_ }; if (-not $ports.Count) { $ports = @(3000, 5173) }; foreach ($port in ($ports | Select-Object -Unique)) { Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force } }\"",
     "backend": "node src/server.js",
-    "dev": "npm run backend",
+    "backend:dev": "nodemon src/server.js",
+    "dev": "npm run backend:dev",
     "vue:serve": "powershell -Command \"$port = if ($env:VUE_APP_DEV_FRONTEND_PORT) { $env:VUE_APP_DEV_FRONTEND_PORT } else { '5173' }; vue-cli-service serve --host 0.0.0.0 --https false --port $port\"",
     "build": "vue-cli-service build",
     "postinstall": "npm install --prefix frontend",
@@ -56,6 +57,7 @@
     "@vue/cli-plugin-babel": "^5.0.9",
     "autoprefixer": "^10.4.27",
     "cross-port-killer": "^1.4.0",
+    "nodemon": "^3.1.14",
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.19",
     "taskkill": "^5.0.0"
