@@ -1450,6 +1450,24 @@ export default {
     // --- Devuelta: diferencia entre recibido y total a pagar ---
     const devueltaPago = computed(() => roundMoney(totalRecibido.value - totalFinalPago.value));
 
+    const devueltaPositiva = computed(() => {
+      if (totalRecibido.value < totalFinalPago.value) return 0;
+      return Math.round(totalRecibido.value - totalFinalPago.value);
+    });
+
+    const montoEfectivoNeto = computed(() => {
+      if (!montoEfectivoHabilitado.value) return 0;
+      const bruto = Number(payment.value.monto_efectivo) || 0;
+      if (devueltaPositiva.value > 0) {
+        return Math.max(0, Math.round(bruto - devueltaPositiva.value));
+      }
+      return bruto;
+    });
+
+    const montoDigitalNeto = computed(() => (
+      montoTransferenciaHabilitado.value ? Number(payment.value.monto_transferencia) || 0 : 0
+    ));
+
     const cargarCaja = async ({ silent = false } = {}) => {
       loading.value = true;
       try {
@@ -1828,6 +1846,11 @@ export default {
         }
       }
 
+      const ticketEfectivoBruto = Number(payment.value.monto_efectivo || 0);
+      const ticketTransferencia = montoDigitalNeto.value;
+      const ticketTotalRecibido = totalRecibido.value;
+      const ticketDevuelta = devueltaPositiva.value;
+
       savingPago.value = true;
       try {
         const paidComandaId = Number(comanda.id);
@@ -1836,8 +1859,8 @@ export default {
           arqueo_id: null,
           aporte_servicio: servicioVoluntarioEditable.value,
           metodo_pago: payment.value.metodo_pago,
-          monto_efectivo: montoEfectivoHabilitado.value ? payment.value.monto_efectivo : 0,
-          monto_digital: montoTransferenciaHabilitado.value ? payment.value.monto_transferencia : 0,
+          monto_efectivo: montoEfectivoNeto.value,
+          monto_digital: montoDigitalNeto.value,
           notas: payment.value.notas || null
         });
 
@@ -1845,8 +1868,10 @@ export default {
         if (data?.venta) {
           imprimirTicket({
             ...data.venta,
-            total_recibido: data.total_recibido,
-            cambio: data.cambio
+            monto_efectivo: ticketEfectivoBruto,
+            monto_digital: ticketTransferencia,
+            total_recibido: ticketTotalRecibido,
+            cambio: ticketDevuelta
           });
         }
 
