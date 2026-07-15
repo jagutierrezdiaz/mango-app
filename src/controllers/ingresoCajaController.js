@@ -59,9 +59,16 @@ export const getIngresos = async (req, res) => {
           p.nombres,
           p.apellidos,
           p.rol,
-          p.url_foto
+          p.url_foto,
+          m.id AS id_mesa,
+          m.nombre AS mesa_nombre,
+          pm.nombres AS mesero_nombres,
+          pm.apellidos AS mesero_apellidos
         FROM ingresos_ventas iv
         LEFT JOIN personal p ON iv.persona_id = p.id
+        LEFT JOIN comandas c ON c.id = iv.comanda_id
+        LEFT JOIN mesas m ON m.id = c.mesa_id
+        LEFT JOIN personal pm ON pm.id = c.personal_id
         ${whereClause}
         ORDER BY iv.fecha_venta DESC, iv.id DESC
       `,
@@ -125,6 +132,9 @@ export const getIngresos = async (req, res) => {
       monto_digital: roundMoney(row.monto_digital),
       personal_url_foto: buildPersonalPhotoUrl(req, row.url_foto),
       personal_nombre: `${row.nombres || ''} ${row.apellidos || ''}`.trim(),
+      id_mesa: row.id_mesa == null ? null : Number(row.id_mesa),
+      mesa_nombre: row.mesa_nombre || null,
+      mesero_nombre: `${row.mesero_nombres || ''} ${row.mesero_apellidos || ''}`.trim() || null,
       // Adjuntar lista de productos asociados a la comanda (si existen)
       productos: detallesPorComanda.get(Number(row.comanda_id || 0)) || []
     }));
@@ -168,9 +178,16 @@ export const getIngresoById = async (req, res) => {
           p.nombres,
           p.apellidos,
           p.rol,
-          p.url_foto
+          p.url_foto,
+          m.id AS id_mesa,
+          m.nombre AS mesa_nombre,
+          pm.nombres AS mesero_nombres,
+          pm.apellidos AS mesero_apellidos
         FROM ingresos_ventas iv
         LEFT JOIN personal p ON iv.persona_id = p.id
+        LEFT JOIN comandas c ON c.id = iv.comanda_id
+        LEFT JOIN mesas m ON m.id = c.mesa_id
+        LEFT JOIN personal pm ON pm.id = c.personal_id
         WHERE iv.id = ?
         LIMIT 1
       `,
@@ -192,7 +209,10 @@ export const getIngresoById = async (req, res) => {
       monto_efectivo: roundMoney(row.monto_efectivo),
       monto_digital: roundMoney(row.monto_digital),
       personal_url_foto: buildPersonalPhotoUrl(req, row.url_foto),
-      personal_nombre: `${row.nombres || ''} ${row.apellidos || ''}`.trim()
+      personal_nombre: `${row.nombres || ''} ${row.apellidos || ''}`.trim(),
+      id_mesa: row.id_mesa == null ? null : Number(row.id_mesa),
+      mesa_nombre: row.mesa_nombre || null,
+      mesero_nombre: `${row.mesero_nombres || ''} ${row.mesero_apellidos || ''}`.trim() || null
     };
 
     return res.json({ success: true, data });

@@ -184,6 +184,9 @@ function buildTicketHtml(ticket, businessInfo, logoSrc, opts = {}) {
   const notasBlock = ticket.notas
     ? buildTotalRow('Notas', ticket.notas)
     : '';
+  const devueltaBlock = opts.hideDevuelta
+    ? ''
+    : buildTotalRow('Devuelta', formatCurrency(devuelta), true);
 
   return `<!doctype html>
         <html>
@@ -221,7 +224,7 @@ function buildTicketHtml(ticket, businessInfo, logoSrc, opts = {}) {
           ${efectivoBlock}
           ${transferenciaBlock}
           ${buildTotalRow('Total Recibido', formatCurrency(totalRecibido))}
-          ${buildTotalRow('Devuelta', formatCurrency(devuelta), true)}
+          ${devueltaBlock}
           ${notasBlock}
           <hr>
           ${fiscalFooterHtml}

@@ -280,7 +280,8 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { ingresoCajaService } from '../services/ingresoCajaService.js';
 import { BACKEND_ORIGIN } from '../config/api.js';
 import { getXLSX } from '../utils/lazyVendors.js';
-import { formatNumeroControl } from '../utils/ticketTemplates.js';
+import { buildTicketHtml, formatNumeroControl } from '../utils/ticketTemplates.js';
+import { businessInfo } from '../config/businessInfo.js';
 
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
@@ -534,117 +535,37 @@ export default {
 
     // exportarPDF removed
 
-    const imprimirFactura = (item) => {
+    const imprimirFactura = async (item) => {
       const popup = window.open('', '_blank', 'width=420,height=720');
       if (!popup) {
         alert('Por favor habilite ventanas emergentes para imprimir.');
         return;
       }
 
-      const logoSrc = COMPANY_LOGO_URL;
-      const formatCurrency = (value) => parseNumber(value).toLocaleString('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      });
-
-      const totalRecibido = parseNumber(item.monto_efectivo) + parseNumber(item.monto_digital);
-      const devuelta = totalRecibido - parseNumber(item.total_pagado);
-      const efectivoRow = item.monto_efectivo > 0
-        ? `<tr><td>Efectivo Recibido</td><td class="num-entero" style="text-align:right">${formatCurrency(item.monto_efectivo)}</td></tr>`
-        : '';
-      const transferenciaRow = item.monto_digital > 0
-        ? `<tr><td>Transferencia Recibida</td><td class="num-entero" style="text-align:right">${formatCurrency(item.monto_digital)}</td></tr>`
-        : '';
-
-      const productosRows = Array.isArray(item.productos) && item.productos.length > 0
-        ? item.productos.map((p) => `
-          <tr>
-            <td style="vertical-align:top">
-              <div>${p.producto_nombre}</div>
-              <div class="mini" style="color:#444;font-size:10px;margin-top:3px">${p.cantidad} x ${formatCurrency(p.precio_unitario)}</div>
-            </td>
-            <td style="text-align:right;vertical-align:top">${formatCurrency(p.valor_subtotal)}</td>
-          </tr>
-        `).join('')
-        : '';
-
-      const productosTable = productosRows ? `
-        <hr>
-        <div class="mini"><strong>Productos</strong></div>
-        <table>
-          <thead>
-            <tr>
-              <td><strong>Producto</strong></td>
-              <td style="text-align:right"><strong>Subtotal</strong></td>
-            </tr>
-          </thead>
-          <tbody>
-            ${productosRows}
-          </tbody>
-        </table>
-      ` : '';
-
-      const html = `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Comprobante ${formatNumeroControl(item.numero_factura)}</title>
-<style>
-@page{size:80mm auto;margin:0}
-body{font-family:Arial,sans-serif;margin:0;padding:0;background:#fff;color:#111}
-.ticket{width:80mm;max-width:80mm;padding:4mm;margin:0 auto;box-sizing:border-box}
-.center{text-align:center}.strong{font-weight:700}.muted{font-size:11px;color:#444}
-hr{border:none;border-top:1px dashed #999;margin:8px 0}table{width:100%;border-collapse:collapse;font-size:11px}td{padding:3px 0;vertical-align:top}
-.total-row td{font-weight:700;font-size:12px}.devuelta-row td{font-weight:700;font-size:12px;border-top:1px solid #111;padding-top:5px}.mini{font-size:10px}
-.logo-row{text-align:center;margin-bottom:4px}
-.logo{display:block;max-width:200px;width:100%;height:auto;max-height:18mm;margin:0 auto;object-fit:contain}
-.fiscal-footer{text-align:center;font-size:0.6rem;line-height:1.28;margin-top:8px;word-break:break-word}
-@media print{
-  html,body{width:80mm !important;max-width:80mm !important;margin:0 !important;padding:0 !important}
-  .ticket{width:80mm !important;max-width:80mm !important;padding:3.5mm !important;margin:0 auto !important}
-  img{page-break-inside:avoid}
-}
-</style>
-</head>
-<body onload="window.print(); setTimeout(() => window.close(), 250);">
-<div class="ticket">
-  <div class="logo-row">
-    <img src="${logoSrc}" alt="Logo Patio Bohemio" class="logo" onerror="this.style.display='none'" />
-  </div>
-  <div class="center">
-    <div class="strong">PATIO BOHEMIO</div>
-    <div style="font-size:11px;margin-top:4px;font-weight:700">COMPROBANTE INTERNO DE VENTA</div>
-    <div class="muted">(NO ES FACTURA)</div>
-    <div class="mini">Número de Control: ${formatNumeroControl(item.numero_factura)}</div>
-  </div>
-  <hr>
-  <div class="mini"><strong>Fecha:</strong> ${formatFechaSQL(item.fecha_venta)}</div>
-  <div class="mini"><strong>Comanda:</strong> #${item.comanda_id}</div>
-  <div class="mini"><strong>Mesero:</strong> ${item.personal_nombre || 'Sin asignar'}</div>
-  <hr>
-  ${productosTable}
-  <table>
-    <tr><td>Subtotal</td><td class="num-entero" style="text-align:right">${formatCurrency(item.total_venta)}</td></tr>
-    <tr><td>Aporte Voluntario</td><td class="num-entero" style="text-align:right">${formatCurrency(item.aporte_servicio)}</td></tr>
-    <tr class="total-row"><td>Total Final</td><td class="num-entero" style="text-align:right">${formatCurrency(item.total_pagado)}</td></tr>
-  </table>
-  <hr>
-  <table>
-    <tr><td>Método de Pago</td><td style="text-align:right">${item.metodo_pago}</td></tr>
-    ${efectivoRow}
-    ${transferenciaRow}
-    <tr><td>Total Recibido</td><td class="num-entero" style="text-align:right">${formatCurrency(totalRecibido)}</td></tr>
-    <tr class="devuelta-row"><td>Devuelta</td><td class="num-entero" style="text-align:right">${formatCurrency(Math.max(0, devuelta))}</td></tr>
-  </table>
-  <hr>
-</div>
-</body>
-</html>`;
+      const logoSrc = (await loadLogoDataUrl()) || COMPANY_LOGO_URL;
+      const efectivoRecibido = Number(item.monto_efectivo) || 0;
+      const transferenciaRecibida = Number(item.monto_digital) || 0;
+      const totalRecibido = Math.round(efectivoRecibido + transferenciaRecibida);
+      const ticket = {
+        numero_factura: item.numero_factura,
+        fecha_venta: item.fecha_venta,
+        comanda_id: item.comanda_id,
+        id_mesa: item.id_mesa,
+        mesa_nombre: item.mesa_nombre,
+        mesero_nombre: item.mesero_nombre || 'Sin asignar',
+        detalles: item.productos || [],
+        total_venta: item.total_venta,
+        aporte_servicio: item.aporte_servicio,
+        total_pagado: item.total_pagado,
+        metodo_pago: item.metodo_pago,
+        monto_efectivo: efectivoRecibido,
+        monto_digital: transferenciaRecibida,
+        total_recibido: totalRecibido,
+        notas: item.notas
+      };
 
       popup.document.open();
-      popup.document.write(html);
+      popup.document.write(buildTicketHtml(ticket, businessInfo, logoSrc, { hideDevuelta: true }));
       popup.document.close();
     };
 
