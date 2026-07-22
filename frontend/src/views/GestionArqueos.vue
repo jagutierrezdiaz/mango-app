@@ -4,7 +4,7 @@
       <div>
         <h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">Arqueo de Caja
         </h1>
-        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Patio Bohemio / Control Diario
+        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Control Diario
           de Arqueos</p>
       </div>
 

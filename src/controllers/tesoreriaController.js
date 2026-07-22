@@ -32,6 +32,15 @@ const normalizeAsignaciones = (input) => {
   return [];
 };
 
+const logSqlGastoPago = (step, sql, params = [], extra = null) => {
+  const normalizedSql = String(sql || '').replace(/\s+/g, ' ').trim();
+  console.log(`[registrarPagoTesoreria][${step}] SQL:`, normalizedSql);
+  console.log(`[registrarPagoTesoreria][${step}] params:`, params);
+  if (extra !== null && extra !== undefined) {
+    console.log(`[registrarPagoTesoreria][${step}] result:`, extra);
+  }
+};
+
 const getSaldosFromRows = (rows) => {
   const saldoBase = {
     '110505': 0,
@@ -97,10 +106,10 @@ const insertarMovimientoContable = async (connection, payload) => {
   } = payload;
 
   const hasArqueoId = await tableHasColumn(connection, 'movimientos_contables', 'arqueo_id');
+  const logPago = ['gastos', 'costos'].includes(String(referencia_tabla || ''));
 
   if (hasArqueoId) {
-    await connection.query(
-      `INSERT INTO movimientos_contables (
+    const insertSql = `INSERT INTO movimientos_contables (
         fecha,
         cuenta_codigo,
         tipo_movimiento,
@@ -109,24 +118,35 @@ const insertarMovimientoContable = async (connection, payload) => {
         referencia_id,
         descripcion,
         arqueo_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        fecha,
-        cuenta_codigo,
-        toDbTipoMovimiento(tipo_movimiento),
-        roundMoney(monto),
-        referencia_tabla,
-        Number(referencia_id),
-        descripcion,
-        arqueo_id
-      ]
-    );
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    const insertParams = [
+      fecha,
+      cuenta_codigo,
+      toDbTipoMovimiento(tipo_movimiento),
+      roundMoney(monto),
+      referencia_tabla,
+      Number(referencia_id),
+      descripcion,
+      arqueo_id
+    ];
+
+    if (logPago) {
+      logSqlGastoPago('INSERT movimiento_contable', insertSql, insertParams);
+    }
+
+    const [insertResult] = await connection.query(insertSql, insertParams);
+
+    if (logPago) {
+      logSqlGastoPago('INSERT movimiento_contable', insertSql, insertParams, {
+        insertId: insertResult?.insertId,
+        affectedRows: insertResult?.affectedRows
+      });
+    }
 
     return;
   }
 
-  await connection.query(
-    `INSERT INTO movimientos_contables (
+  const insertSql = `INSERT INTO movimientos_contables (
       fecha,
       cuenta_codigo,
       tipo_movimiento,
@@ -134,17 +154,29 @@ const insertarMovimientoContable = async (connection, payload) => {
       referencia_tabla,
       referencia_id,
       descripcion
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [
-      fecha,
-      cuenta_codigo,
-      toDbTipoMovimiento(tipo_movimiento),
-      roundMoney(monto),
-      referencia_tabla,
-      Number(referencia_id),
-      descripcion
-    ]
-  );
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  const insertParams = [
+    fecha,
+    cuenta_codigo,
+    toDbTipoMovimiento(tipo_movimiento),
+    roundMoney(monto),
+    referencia_tabla,
+    Number(referencia_id),
+    descripcion
+  ];
+
+  if (logPago) {
+    logSqlGastoPago('INSERT movimiento_contable', insertSql, insertParams);
+  }
+
+  const [insertResult] = await connection.query(insertSql, insertParams);
+
+  if (logPago) {
+    logSqlGastoPago('INSERT movimiento_contable', insertSql, insertParams, {
+      insertId: insertResult?.insertId,
+      affectedRows: insertResult?.affectedRows
+    });
+  }
 };
 
 export const getSaldosTesoreria = async (_req, res) => {
@@ -438,6 +470,13 @@ export const registrarPagoTesoreria = async (req, res) => {
     const montoObjetivoRequest = req.body?.monto_objetivo;
     const asignacionesRaw = normalizeAsignaciones(req.body?.asignaciones);
 
+    console.log('[registrarPagoTesoreria] Inicio', {
+      registro_id: registroId,
+      tipo_registro: tipoRegistro,
+      monto_objetivo: montoObjetivoRequest,
+      asignaciones_raw: asignacionesRaw
+    });
+
     if (!registroId) {
       return res.status(400).json({ success: false, message: 'registro_id es requerido.' });
     }
@@ -454,35 +493,67 @@ export const registrarPagoTesoreria = async (req, res) => {
       }))
       .filter((item) => item.monto > 0);
 
+    console.log('[registrarPagoTesoreria] Asignaciones normalizadas:', asignaciones);
+
     if (!asignaciones.length) {
       return res.status(400).json({ success: false, message: 'Debe asignar al menos un monto mayor a 0.' });
     }
 
     await connection.beginTransaction();
+    console.log('[registrarPagoTesoreria] Transacción iniciada');
 
     const tableName = tipoRegistro === 'gasto' ? 'gastos' : 'costos';
     const referenciaTabla = tableName;
 
-    const [rows] = await connection.query(
-      tipoRegistro === 'gasto'
-        ? `SELECT id, total_gasto AS monto_registro, grupo_puc
-           FROM gastos
-           WHERE id = ?
-           LIMIT 1
-           FOR UPDATE`
-        : `SELECT id, total_costo AS monto_registro, clase_puc
-           FROM costos
-           WHERE id = ?
-           LIMIT 1
-           FOR UPDATE`,
-      [registroId]
-    );
+    const selectSql = tipoRegistro === 'gasto'
+      ? `SELECT id, total_gasto AS monto_registro, grupo_puc, estado, fuente_pago
+         FROM gastos
+         WHERE id = ?
+         LIMIT 1
+         FOR UPDATE`
+      : `SELECT id, total_costo AS monto_registro, clase_puc, estado, fuente_pago
+         FROM costos
+         WHERE id = ?
+         LIMIT 1
+         FOR UPDATE`;
+
+    logSqlGastoPago('SELECT registro', selectSql, [registroId]);
+    const [rows] = await connection.query(selectSql, [registroId]);
+    logSqlGastoPago('SELECT registro', selectSql, [registroId], rows);
 
     const registro = rows?.[0];
     if (!registro) {
+      console.log('[registrarPagoTesoreria] Registro no encontrado, rollback');
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         message: `${tipoRegistro === 'gasto' ? 'Gasto' : 'Costo'} no encontrado.`
+      });
+    }
+
+    const estadoPrevio = String(registro.estado || '').toUpperCase();
+    console.log('[registrarPagoTesoreria] Registro bloqueado:', {
+      id: registro.id,
+      estado_previo: estadoPrevio,
+      fuente_pago_previo: registro.fuente_pago,
+      monto_registro: registro.monto_registro
+    });
+
+    if (estadoPrevio === 'ANULADO') {
+      console.log('[registrarPagoTesoreria] Rechazado: ANULADO, rollback');
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: 'El registro está anulado y no puede pagarse.'
+      });
+    }
+
+    if (estadoPrevio === 'PAGADO') {
+      console.log('[registrarPagoTesoreria] Rechazado: ya PAGADO, rollback');
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: 'El registro ya está pagado.'
       });
     }
 
@@ -491,6 +562,11 @@ export const registrarPagoTesoreria = async (req, res) => {
     const totalAsignado = roundMoney(asignaciones.reduce((acc, item) => acc + item.monto, 0));
 
     if (Math.abs(montoObjetivo - montoRegistro) > 0.009) {
+      console.log('[registrarPagoTesoreria] Rechazado: monto_objetivo != monto_registro, rollback', {
+        montoObjetivo,
+        montoRegistro
+      });
+      await connection.rollback();
       return res.status(400).json({
         success: false,
         message: 'El monto_objetivo no coincide con el valor del registro en base de datos.'
@@ -498,18 +574,36 @@ export const registrarPagoTesoreria = async (req, res) => {
     }
 
     if (Math.abs(totalAsignado - montoObjetivo) > 0.009) {
+      console.log('[registrarPagoTesoreria] Rechazado: total asignado != monto objetivo, rollback', {
+        totalAsignado,
+        montoObjetivo
+      });
+      await connection.rollback();
       return res.status(400).json({
         success: false,
         message: 'La suma asignada debe ser exactamente igual al monto objetivo.'
       });
     }
 
+    const saldosSql = `SELECT mc.cuenta_codigo,
+      COALESCE(SUM(CASE WHEN mc.tipo_movimiento = 'Debito' THEN mc.monto ELSE -mc.monto END), 0) AS saldo_disponible
+     FROM movimientos_contables mc
+     WHERE mc.cuenta_codigo IN ('110505', '110510', '110515', '111005')
+     GROUP BY mc.cuenta_codigo`;
+    logSqlGastoPago('SELECT saldos', saldosSql, []);
     const saldos = await getSaldosByConnection(connection);
+    logSqlGastoPago('SELECT saldos', saldosSql, [], saldos);
     const saldosByCuenta = Object.fromEntries(saldos.map((item) => [item.cuenta_codigo, roundMoney(item.saldo_disponible)]));
 
     for (const asignacion of asignaciones) {
       const saldoDisponible = roundMoney(saldosByCuenta[asignacion.cuenta_codigo] || 0);
       if (asignacion.monto - saldoDisponible > 0.009) {
+        console.log('[registrarPagoTesoreria] Rechazado: saldo insuficiente, rollback', {
+          cuenta: asignacion.cuenta_codigo,
+          monto: asignacion.monto,
+          saldoDisponible
+        });
+        await connection.rollback();
         return res.status(400).json({
           success: false,
           message: `Saldo insuficiente en cuenta ${asignacion.cuenta_codigo}. Disponible: ${saldoDisponible}`
@@ -526,16 +620,34 @@ export const registrarPagoTesoreria = async (req, res) => {
       ? mapGrupoPucToCuentaGasto(registro.grupo_puc)
       : mapClasePucToCuentaCosto(registro.clase_puc);
 
-    await connection.query(
-      `UPDATE ${tableName}
-       SET fuente_pago = ?
-       WHERE id = ?`,
-      [fuentePago, registroId]
-    );
+    console.log('[registrarPagoTesoreria] Datos calculados para pago:', {
+      tableName,
+      fuentePago,
+      cuentaDestino,
+      registroId
+    });
+
+    const updateSql = `UPDATE ${tableName}
+       SET fuente_pago = ?, estado = 'PAGADO'
+       WHERE id = ?`;
+    const updateParams = [fuentePago, registroId];
+    logSqlGastoPago('UPDATE gasto/costo', updateSql, updateParams);
+    const [updateResult] = await connection.query(updateSql, updateParams);
+    logSqlGastoPago('UPDATE gasto/costo', updateSql, updateParams, {
+      affectedRows: updateResult?.affectedRows,
+      changedRows: updateResult?.changedRows,
+      warningStatus: updateResult?.warningStatus
+    });
 
     for (const asignacion of asignaciones) {
       const descripcionBase = `Pago ${tipoRegistro} #${registroId} desde cuenta ${asignacion.cuenta_codigo}`;
 
+      console.log('[registrarPagoTesoreria] Insertando movimiento CREDITO', {
+        cuenta_codigo: asignacion.cuenta_codigo,
+        monto: asignacion.monto,
+        referencia_tabla: referenciaTabla,
+        referencia_id: registroId
+      });
       await insertarMovimientoContable(connection, {
         cuenta_codigo: asignacion.cuenta_codigo,
         tipo_movimiento: 'CREDITO',
@@ -546,6 +658,12 @@ export const registrarPagoTesoreria = async (req, res) => {
         arqueo_id: null
       });
 
+      console.log('[registrarPagoTesoreria] Insertando movimiento DEBITO', {
+        cuenta_codigo: cuentaDestino,
+        monto: asignacion.monto,
+        referencia_tabla: referenciaTabla,
+        referencia_id: registroId
+      });
       await insertarMovimientoContable(connection, {
         cuenta_codigo: cuentaDestino,
         tipo_movimiento: 'DEBITO',
@@ -557,7 +675,16 @@ export const registrarPagoTesoreria = async (req, res) => {
       });
     }
 
+    console.log('[registrarPagoTesoreria] Ejecutando COMMIT');
     await connection.commit();
+
+    const verifySql = tipoRegistro === 'gasto'
+      ? 'SELECT id, estado, fuente_pago, total_gasto FROM gastos WHERE id = ? LIMIT 1'
+      : 'SELECT id, estado, fuente_pago, total_costo FROM costos WHERE id = ? LIMIT 1';
+    logSqlGastoPago('VERIFY post-commit', verifySql, [registroId]);
+    const [verifyRows] = await db.query(verifySql, [registroId]);
+    logSqlGastoPago('VERIFY post-commit', verifySql, [registroId], verifyRows?.[0] || null);
+    console.log('[registrarPagoTesoreria] Pago completado exitosamente');
 
     return res.json({
       success: true,
@@ -566,6 +693,7 @@ export const registrarPagoTesoreria = async (req, res) => {
         registro_id: registroId,
         tipo_registro: tipoRegistro,
         fuente_pago: fuentePago,
+        estado: 'PAGADO',
         monto_objetivo: montoObjetivo,
         total_asignado: totalAsignado,
         asignaciones
@@ -573,12 +701,13 @@ export const registrarPagoTesoreria = async (req, res) => {
     });
   } catch (error) {
     try {
+      console.log('[registrarPagoTesoreria] Error capturado, ejecutando ROLLBACK');
       await connection.rollback();
     } catch {
       // No-op
     }
 
-    console.error('Error al registrar pago en tesoreria:', error);
+    console.error('[registrarPagoTesoreria] Error al registrar pago en tesoreria:', error);
     return res.status(500).json({
       success: false,
       message: 'No se pudo registrar el pago en tesoreria.'

@@ -579,7 +579,7 @@ export class RealtimeHub {
                     const supportId = this.sanitizeSupportId(payload.supportId);
                     const userPeerId = this.sanitizePeerId(payload.userPeerId);
                     const rolVista = this.sanitizeLabel(payload.rol_vista) || 'Soporte';
-                    const userName = this.sanitizeLabel(payload.nombre_usuario || payload.userName) || session.data?.user?.usuario || 'Usuario Patio Bohemio';
+                    const userName = this.sanitizeLabel(payload.nombre_usuario || payload.userName) || session.data?.user?.usuario || 'Usuario';
                     const userLocal = this.sanitizeLabel(payload.userLocal) || 'Local principal';
 
                     if (!supportId || supportId.length < 4 || !userPeerId) {
@@ -762,7 +762,7 @@ export class RealtimeHub {
                     try {
                         const supportId = this.sanitizeSupportId(payload.support_id || payload.supportId);
                         const modulo = this.sanitizeLabel(payload.modulo || payload.rol_vista) || 'Operacion';
-                        const user = this.sanitizeLabel(payload.user || payload.usuario || payload.user_name) || 'Usuario Patio Bohemio';
+                        const user = this.sanitizeLabel(payload.user || payload.usuario || payload.user_name) || 'Usuario';
                         const duracion = String(payload.tiempo || payload.duracion || '00:00:00').trim();
 
                         if (!supportId) {

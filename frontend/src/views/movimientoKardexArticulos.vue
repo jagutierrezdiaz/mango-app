@@ -4,7 +4,7 @@
       <div class="bg-teal-700 p-6 text-white flex justify-between items-center sticky top-0 z-20">
         <div>
           <h3 class="text-xs font-black uppercase tracking-[0.2em] italic">{{ isEdit ? 'Editar' : 'Nuevo' }} Movimiento</h3>
-          <p class="text-[10px] uppercase tracking-[0.16em] mt-1 text-teal-50/90">Inventario manual de Patio Bohemio</p>
+          <p class="text-[10px] uppercase tracking-[0.16em] mt-1 text-teal-50/90">Inventario manual</p>
         </div>
         <button @click="emitClose" class="pb-btn pb-btn-secondary btn-icon-text px-3 py-1.5 text-[10px]">
           <i class="fas fa-times"></i>

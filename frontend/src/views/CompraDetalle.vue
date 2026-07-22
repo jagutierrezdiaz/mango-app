@@ -3,7 +3,11 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="flex justify-between items-center px-4 py-3 border-b bg-gray-50">
         <span class="text-[9px] font-black uppercase admin-card-title tracking-widest">Detalle de Compra</span>
-        <button @click="abrirModal" class="btn-icon-text text-[10px] bg-slate-900 text-white px-3 py-1.5 rounded-lg font-black hover:bg-orange-600 transition-all">
+        <button
+          @click="abrirModal"
+          :disabled="readonly"
+          class="btn-icon-text text-[10px] bg-slate-900 text-white px-3 py-1.5 rounded-lg font-black hover:bg-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <i class="fas fa-plus"></i>
           <span>Nuevo Articulo</span>
         </button>
@@ -40,11 +44,19 @@
             </div>
 
             <div class="flex gap-2 xl:ml-auto w-full xl:w-auto justify-end">
-              <button @click="editarItem(item)" class="pb-btn pb-btn-edit btn-icon-text text-xs px-3 py-1.5 whitespace-nowrap">
+              <button
+                @click="editarItem(item)"
+                :disabled="readonly"
+                class="pb-btn pb-btn-edit btn-icon-text text-xs px-3 py-1.5 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <i class="fas fa-pen-to-square text-[11px]"></i>
                 <span>Editar</span>
               </button>
-              <button @click="eliminarItem(item.id)" class="pb-btn pb-btn-danger btn-icon-text text-xs px-3 py-1.5 whitespace-nowrap">
+              <button
+                @click="eliminarItem(item.id)"
+                :disabled="readonly"
+                class="pb-btn pb-btn-danger btn-icon-text text-xs px-3 py-1.5 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <i class="fas fa-trash-can text-[11px]"></i>
                 <span>Borrar</span>
               </button>
@@ -115,13 +127,9 @@
           </div>
 
           <div class="grid grid-cols-2 gap-3">
-            <div>
+            <div class="col-span-2">
               <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Und</label>
               <input :value="unidadSeleccionada || '---'" readonly class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-slate-600 uppercase">
-            </div>
-            <div>
-              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">IVA</label>
-              <input v-model="form.iva_porcentaje" type="text" readonly class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-slate-700 text-right">
             </div>
           </div>
 
@@ -141,7 +149,27 @@
               <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Sub Total</label>
               <input :value="subtotalCalculado" readonly class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-slate-700 text-right">
             </div>
-            <div></div>
+            <div>
+              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">IVA (%)</label>
+              <input
+                v-model="form.iva_porcentaje"
+                type="text"
+                required
+                @blur="onBlurMoney('iva_porcentaje')"
+                class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-amber-500 outline-none transition-all text-sm font-medium text-right"
+              >
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Valor IVA</label>
+              <input :value="valorIvaCalculado" readonly class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-slate-700 text-right">
+            </div>
+            <div>
+              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Total a Pagar</label>
+              <input :value="totalAPagarCalculado" readonly class="w-full px-4 py-3 bg-teal-50 border border-teal-200 rounded-2xl text-sm font-black text-teal-700 text-right">
+            </div>
           </div>
 
           <div class="flex gap-3 pt-4">
@@ -164,6 +192,10 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { compraService } from '../services/compraService.js';
 import { articuloService } from '../services/articuloService.js';
+import { parametrosSistemaService } from '../services/parametrosSistemaService.js';
+
+const IVA_PARAMETRO_NOMBRES = ['iva_compras', 'iva', 'porcentaje_iva'];
+const IVA_PORCENTAJE_DEFAULT = 19;
 
 export default {
   name: 'CompraDetalle',
@@ -171,6 +203,10 @@ export default {
     compraId: {
       type: Number,
       required: true
+    },
+    readonly: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['updated'],
@@ -181,6 +217,7 @@ export default {
     const isEdit = ref(false);
     const items = ref([]);
     const articulos = ref([]);
+    const ivaParametroDefault = ref(IVA_PORCENTAJE_DEFAULT);
 
     // ── Autocomplete ──────────────────────────────────────────────────────────
     const inputBusqueda = ref(null);
@@ -301,14 +338,34 @@ export default {
     });
     const formatPercent = (value) => `${formatNumber(value)}%`;
 
-    const subtotalCalculado = computed(() => {
+    const subtotalBase = computed(() => {
       const cantidad = parseLocaleNumber(form.value.cantidad);
       const costoUnitario = parseLocaleNumber(form.value.costo_unitario);
-      return formatMoney(cantidad * costoUnitario);
+      return cantidad * costoUnitario;
     });
 
+    const subtotalCalculado = computed(() => formatMoney(subtotalBase.value));
+
+    const valorIvaCalculado = computed(() => {
+      const ivaPct = parseLocaleNumber(form.value.iva_porcentaje);
+      return formatMoney(subtotalBase.value * (ivaPct / 100));
+    });
+
+    const totalAPagarCalculado = computed(() => {
+      const ivaPct = parseLocaleNumber(form.value.iva_porcentaje);
+      return formatMoney(subtotalBase.value * (1 + ivaPct / 100));
+    });
+
+    const calcularValorIvaItem = (item) => {
+      const base = parseLocaleNumber(item.cantidad) * parseLocaleNumber(item.costo_unitario);
+      const ivaPct = parseLocaleNumber(item.iva_porcentaje);
+      return base * (ivaPct / 100);
+    };
+
     const totalDetalleCompra = computed(() => items.value.reduce(
-      (accumulator, item) => accumulator + parseLocaleNumber(item.valor_subtotal),
+      (accumulator, item) => accumulator
+        + parseLocaleNumber(item.valor_subtotal)
+        + calcularValorIvaItem(item),
       0
     ));
 
@@ -342,8 +399,29 @@ export default {
       articulos.value = Array.isArray(data) ? data : [];
     };
 
+    const resolverIvaParametro = (params) => {
+      const lista = Array.isArray(params) ? params : [];
+      const ivaParam = lista.find((param) => {
+        const nombre = String(param?.nombre_parametro || '').trim().toLowerCase();
+        return IVA_PARAMETRO_NOMBRES.includes(nombre);
+      });
+      const valor = parseLocaleNumber(ivaParam?.valor_parametro);
+      return Number.isFinite(valor) && valor >= 0 ? valor : IVA_PORCENTAJE_DEFAULT;
+    };
+
+    const cargarIvaParametro = async () => {
+      try {
+        const params = await parametrosSistemaService.getAll();
+        ivaParametroDefault.value = resolverIvaParametro(params);
+      } catch (error) {
+        console.error('[CompraDetalle] No se pudo cargar el IVA desde parametros:', error);
+        ivaParametroDefault.value = IVA_PORCENTAJE_DEFAULT;
+      }
+    };
+
     const abrirModal = async () => {
-      await cargarArticulos();
+      if (props.readonly) return;
+      await Promise.all([cargarArticulos(), cargarIvaParametro()]);
       isEdit.value = false;
       busquedaArticulo.value = '';
       mostrarDropdown.value = false;
@@ -353,7 +431,7 @@ export default {
         articulo_id: '',
         cantidad: '0,00',
         costo_unitario: '0,00',
-        iva_porcentaje: '19,00'
+        iva_porcentaje: formatNumber(ivaParametroDefault.value)
       };
       showModal.value = true;
       await nextTick();
@@ -361,6 +439,7 @@ export default {
     };
 
     const editarItem = async (item) => {
+      if (props.readonly) return;
       await cargarArticulos();
       isEdit.value = true;
       // Pre-cargar nombre del artículo en el buscador
@@ -373,7 +452,7 @@ export default {
         articulo_id: item.articulo_id,
         cantidad: formatNumber(item.cantidad),
         costo_unitario: formatNumber(item.costo_unitario),
-        iva_porcentaje: formatNumber(item.iva_porcentaje || 19)
+        iva_porcentaje: formatNumber(item.iva_porcentaje ?? ivaParametroDefault.value)
       };
       showModal.value = true;
       await nextTick();
@@ -412,6 +491,7 @@ export default {
     };
 
     const eliminarItem = async (id) => {
+      if (props.readonly) return;
       if (!confirm('Desea eliminar este articulo del detalle?')) return;
       try {
         await compraService.deleteDetalle(id);
@@ -429,7 +509,9 @@ export default {
       indiceActivo.value = -1;
     };
 
-    onMounted(fetchItems);
+    onMounted(async () => {
+      await Promise.all([fetchItems(), cargarIvaParametro()]);
+    });
 
     watch(() => props.compraId, () => {
       fetchItems();
@@ -456,7 +538,10 @@ export default {
       // form helpers
       unidadSeleccionada,
       subtotalCalculado,
+      valorIvaCalculado,
+      totalAPagarCalculado,
       totalDetalleCompra,
+      readonly: computed(() => props.readonly),
       formatNumber,
       formatMoney,
       formatPercent,

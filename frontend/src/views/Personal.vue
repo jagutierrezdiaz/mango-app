@@ -9,7 +9,7 @@
     <div class="mb-8 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 border-b pb-4">
       <div>
         <h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">Lista de Personal</h1>
-        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-bold">Patio Bohemio - Gestión de RRHH</p>
+        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-bold">Gestión de RRHH</p>
       </div>
       <div class="flex items-center gap-4 sm:gap-6 w-full lg:w-auto justify-between lg:justify-end">
         <div class="text-right border-r pr-6">

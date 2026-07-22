@@ -3,7 +3,7 @@
     <div class="mb-8 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5 border-b border-slate-200 pb-6">
       <div>
         <h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">Compras</h1>
-        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Patio Bohemio / Histórico de Compras Registradas</p>
+        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Histórico de Compras Registradas</p>
       </div>
 
       <div class="flex flex-col lg:flex-row gap-3 w-full xl:w-auto xl:min-w-[980px]">
@@ -34,10 +34,6 @@
           <button @click="nuevaCompra" class="flex-1 lg:flex-none pb-btn pb-btn-new pb-btn-unified px-5 py-3 whitespace-nowrap">
             <i class="fas fa-plus"></i>
             <span>Nueva Compra</span>
-          </button>
-          <button @click="exportarPDF" :disabled="loading || comprasFiltradas.length === 0" class="flex-1 lg:flex-none pb-btn pb-btn-export pb-btn-unified px-5 py-3 text-[11px] whitespace-nowrap">
-            <i class="fas fa-file-pdf"></i>
-            <span>PDF</span>
           </button>
           <button @click="exportarExcel" :disabled="loading || comprasFiltradas.length === 0" class="flex-1 lg:flex-none pb-btn pb-btn-export pb-btn-unified px-5 py-3 text-[11px] whitespace-nowrap">
             <i class="fas fa-file-excel"></i>
@@ -125,11 +121,19 @@
           </div>
 
           <div class="w-full sm:w-auto flex items-center justify-end gap-2 lg:ml-auto">
-            <button @click.stop="editarCompra(c.id)" class="pb-btn pb-btn-edit btn-icon-text text-xs px-3 py-1.5">
+            <button
+              @click.stop="editarCompra(c.id)"
+              :disabled="!compraEsEditable(c)"
+              class="pb-btn pb-btn-edit btn-icon-text text-xs px-3 py-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <i class="fas fa-pen-to-square text-[11px]"></i>
               <span class="hidden sm:inline">Editar</span>
             </button>
-            <button @click.stop="eliminarCompra(c.id)" class="pb-btn pb-btn-danger btn-icon-text text-xs px-3 py-1.5">
+            <button
+              @click.stop="eliminarCompra(c.id)"
+              :disabled="!compraEsEditable(c)"
+              class="pb-btn pb-btn-danger btn-icon-text text-xs px-3 py-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <i class="fas fa-trash-can text-[11px]"></i>
               <span class="hidden sm:inline">Borrar</span>
             </button>
@@ -146,7 +150,11 @@
             <p class="col-span-2"><b>Observaciones:</b> {{ c.observaciones || '---' }}</p>
           </div>
 
-          <CompraDetalle :compra-id="c.id" @updated="fetchCompras" />
+          <CompraDetalle
+            :compra-id="c.id"
+            :readonly="!compraEsEditable(c)"
+            @updated="fetchCompras"
+          />
         </div>
       </article>
     </div>
@@ -233,7 +241,7 @@ import { compraService } from '../services/compraService.js';
 import { proveedoresService } from '../services/proveedoresService.js';
 import CompraDetalle from './CompraDetalle.vue';
 import { API_BASE_URL } from '../config/api.js';
-import { getPdfTools, getXLSX } from '../utils/lazyVendors.js';
+import { getXLSX } from '../utils/lazyVendors.js';
 import { useDeleteSecurity } from '../composables/useDeleteSecurity.js';
 
 const API_BASE = API_BASE_URL;
@@ -330,6 +338,8 @@ export default {
     };
 
     const formatDateTime = (value) => formatDate(value);
+
+    const compraEsEditable = (compra) => String(compra?.estado_pago || 'Pendiente').trim() === 'Pendiente';
 
     // El rango se aplica en backend con DATE(fecha_compra) para evitar desfases por zona horaria.
     const comprasFiltradas = computed(() => compras.value);
@@ -590,56 +600,6 @@ export default {
       XLSX.writeFile(workbook, filename);
     };
 
-    const exportarPDF = async () => {
-      try {
-        const pdfTools = await getPdfTools();
-        const jsPDF = pdfTools.jsPDF;
-        const autoTable = pdfTools.autoTable;
-
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm' });
-        doc.setFontSize(14);
-        doc.setTextColor(17, 94, 89);
-        doc.text('INFORME DE COMPRAS', 105, 14, { align: 'center' });
-
-        doc.setFontSize(9);
-        doc.setTextColor(100, 116, 139);
-        doc.text(`Periodo: ${filters.value.fechaInicio} al ${filters.value.fechaFinal}`, 14, 22);
-        doc.text(`Total compras: ${comprasFiltradas.value.length}`, 14, 27);
-
-        const rows = comprasFiltradas.value.map((item) => [
-          formatDate(item.fecha_compra),
-          item.proveedor_razon_social || '---',
-          item.numero_documento || '---',
-          formatMoney(item.total_pagar),
-          item.estado_pago || 'Pendiente'
-        ]);
-
-        autoTable(doc, {
-          startY: 32,
-          head: [['Fecha', 'Proveedor', 'Documento', 'Total', 'Estado']],
-          body: rows,
-          margin: 14,
-          headerStyles: {
-            fillColor: [17, 94, 89],
-            textColor: 255,
-            fontStyle: 'bold',
-            fontSize: 8
-          },
-          bodyStyles: {
-            fontSize: 8,
-            textColor: 55
-          },
-          alternateRowStyles: {
-            fillColor: [243, 244, 246]
-          }
-        });
-
-        doc.save(`compras-${filters.value.fechaInicio || 'sin-fecha'}-${filters.value.fechaFinal || 'sin-fecha'}.pdf`);
-      } catch (error) {
-        alert(error.message || 'No fue posible exportar PDF');
-      }
-    };
-
     const imprimirReporte = () => {
       const popup = window.open('', '_blank');
       if (!popup) {
@@ -712,6 +672,7 @@ export default {
       formatDate,
       formatDateTime,
       formatMoney,
+      compraEsEditable,
       consultar,
       resetFechas,
       toggleDetalle,
@@ -723,7 +684,6 @@ export default {
       closeModal,
       getProveedorImageUrl,
       handleProveedorImageError,
-      exportarPDF,
       exportarExcel,
       imprimirReporte
     };

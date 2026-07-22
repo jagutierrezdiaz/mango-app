@@ -207,6 +207,8 @@ export const mapTipoArticuloToCuentaInventario = (tipo) => {
   return mapa[tipoNormalizado] || '143501';
 };
 
+export const CUENTA_IVA_COMPRAS = '240801';
+
 const validarFormatoCuenta = (cuenta) => /^\d{6}$/.test(String(cuenta).trim());
 
 
@@ -461,6 +463,7 @@ export async function registrarAsientoCompra(connection, payload) {
   const {
     compra_id,
     monto,
+    iva_total = 0,
     forma_pago = 'Contado',
     fecha = null,
     numero_documento = '',
@@ -474,13 +477,14 @@ export async function registrarAsientoCompra(connection, payload) {
 
   console.log(`🚀 Iniciando proceso contable para compra ID: ${compra_id}`);
 
-  const montoCompra = roundMoney(monto);
+  const montoInventario = roundMoney(monto);
+  const montoIva = roundMoney(iva_total);
   await connection.query(
     'DELETE FROM movimientos_contables WHERE referencia_tabla = ? AND referencia_id = ?',
     ['compras', Number(compra_id)]
   );
 
-  if (montoCompra <= 0) {
+  if (montoInventario <= 0 && montoIva <= 0) {
     return [];
   }
 
@@ -505,14 +509,17 @@ export async function registrarAsientoCompra(connection, payload) {
     );
   }
 
-  if (!groupedByCuenta.size) {
+  if (!groupedByCuenta.size && montoInventario > 0) {
     if (!validarFormatoCuenta(cuenta_inventario)) {
       throw new Error(`Cuenta de inventario inválida: ${cuenta_inventario}`);
     }
-    groupedByCuenta.set(cuenta_inventario, montoCompra);
+    groupedByCuenta.set(cuenta_inventario, montoInventario);
   }
 
+  let totalDebitos = 0;
+
   for (const [cuentaInventario, totalCuenta] of groupedByCuenta.entries()) {
+    totalDebitos = roundMoney(totalDebitos + totalCuenta);
     insertedIds.push(await insertarMovimiento(connection, {
       fecha: fechaMovimiento,
       cuenta: cuentaInventario,
@@ -524,11 +531,33 @@ export async function registrarAsientoCompra(connection, payload) {
     }));
   }
 
+  if (montoIva > 0) {
+    if (!validarFormatoCuenta(CUENTA_IVA_COMPRAS)) {
+      throw new Error(`Cuenta de IVA inválida: ${CUENTA_IVA_COMPRAS}`);
+    }
+
+    totalDebitos = roundMoney(totalDebitos + montoIva);
+    insertedIds.push(await insertarMovimiento(connection, {
+      fecha: fechaMovimiento,
+      cuenta: CUENTA_IVA_COMPRAS,
+      tipo_movimiento: 'DEBITO',
+      monto: montoIva,
+      descripcion,
+      referencia_tabla: 'compras',
+      referencia_id: Number(compra_id)
+    }));
+  }
+
+  const montoCredito = roundMoney(totalDebitos);
+  if (montoCredito <= 0) {
+    return insertedIds;
+  }
+
   insertedIds.push(await insertarMovimiento(connection, {
     fecha: fechaMovimiento,
     cuenta: cuentaCredito,
     tipo_movimiento: 'CREDITO',
-    monto: montoCompra,
+    monto: montoCredito,
     descripcion,
     referencia_tabla: 'compras',
     referencia_id: Number(compra_id)

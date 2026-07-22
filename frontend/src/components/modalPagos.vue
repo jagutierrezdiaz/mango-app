@@ -96,6 +96,8 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
+import Swal from 'sweetalert2';
+import { gastosService } from '../services/gastosService.js';
 import { tesoreriaService } from '../services/tesoreriaService.js';
 import { formatCurrencyNoDecimals } from '../utils/formatters.js';
 
@@ -141,6 +143,89 @@ const isExacto = computed(() => Math.abs(diferencia.value) < 0.5);
 
 const formatMoney = (value) => formatCurrencyNoDecimals(roundMoney(value));
 
+const escapeHtml = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;');
+
+const renderDetalleRow = (label, value) => `
+  <div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #e2e8f0;">
+    <span style="color:#64748b;font-size:12px;font-weight:700;text-transform:uppercase;">${escapeHtml(label)}</span>
+    <span style="color:#0f172a;font-size:13px;font-weight:700;text-align:right;max-width:65%;">${escapeHtml(value)}</span>
+  </div>
+`;
+
+const buildAsignacionesHtml = () => {
+  const items = Object.entries(asignaciones.value)
+    .map(([cuentaCodigo, monto]) => ({
+      cuentaCodigo,
+      monto: roundMoney(monto)
+    }))
+    .filter((item) => item.monto > 0);
+
+  if (!items.length) {
+    return '<p style="margin:8px 0 0;color:#64748b;font-size:12px;">Sin cuentas asignadas.</p>';
+  }
+
+  return `
+    <ul style="margin:8px 0 0;padding-left:18px;text-align:left;color:#0f172a;font-size:13px;">
+      ${items.map((item) => {
+        const cuenta = cuentas.value.find((c) => c.cuenta_codigo === item.cuentaCodigo);
+        const nombre = cuenta?.nombre || item.cuentaCodigo;
+        return `<li style="margin-bottom:4px;"><strong>${escapeHtml(nombre)}</strong> (${escapeHtml(item.cuentaCodigo)}): ${escapeHtml(formatMoney(item.monto))}</li>`;
+      }).join('')}
+    </ul>
+  `;
+};
+
+const buildGastoConfirmacionHtml = (resumen) => `
+  <div style="text-align:left;margin-top:8px;">
+    <p style="margin:0 0 10px;color:#334155;font-size:14px;">
+      Revise la información del gasto antes de registrar el pago:
+    </p>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;">
+      ${renderDetalleRow('Gasto #', String(props.registro_id))}
+      ${renderDetalleRow('Proveedor ID', resumen.proveedor_id ?? '---')}
+      ${renderDetalleRow('Razón social', resumen.razon_social || '---')}
+      ${renderDetalleRow('Fecha gasto', resumen.fecha_gasto || '---')}
+      ${renderDetalleRow('Descripción', resumen.descripcion || '---')}
+      ${renderDetalleRow('Total gasto', formatMoney(resumen.total_gasto))}
+    </div>
+    <div style="margin-top:14px;background:#ecfeff;border:1px solid #a5f3fc;border-radius:12px;padding:12px 14px;">
+      <p style="margin:0;color:#0f766e;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">
+        Distribución del pago
+      </p>
+      ${buildAsignacionesHtml()}
+    </div>
+    <p style="margin:12px 0 0;color:#475569;font-size:13px;font-weight:600;">
+      ¿Desea registrar el pago por <strong style="color:#0f766e;">${escapeHtml(formatMoney(resumen.total_gasto ?? montoObjetivo.value))}</strong>?
+    </p>
+  </div>
+`;
+
+const buildCostoConfirmacionHtml = () => `
+  <p style="margin:0;color:#475569;font-size:14px;">
+    ¿Confirma el registro del pago de <strong style="color:#0f766e;">${escapeHtml(formatMoney(montoObjetivo.value))}</strong>
+    para ${escapeHtml(tipoRegistroLabel.value)} #${escapeHtml(props.registro_id)}?
+  </p>
+  <div style="margin-top:14px;background:#ecfeff;border:1px solid #a5f3fc;border-radius:12px;padding:12px 14px;text-align:left;">
+    <p style="margin:0;color:#0f766e;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">
+      Distribución del pago
+    </p>
+    ${buildAsignacionesHtml()}
+  </div>
+`;
+
+const obtenerHtmlConfirmacion = async () => {
+  if (String(props.tipo_registro || '').toLowerCase() !== 'gasto') {
+    return buildCostoConfirmacionHtml();
+  }
+
+  const resumen = await gastosService.getResumenPago(props.registro_id);
+  return buildGastoConfirmacionHtml(resumen);
+};
+
 const resetAsignaciones = () => {
   asignaciones.value = {
     '110505': 0, //Caja Punto de Venta
@@ -175,6 +260,33 @@ const confirmarPago = async () => {
     return;
   }
 
+  let confirmacionHtml = '';
+  try {
+    confirmacionHtml = await obtenerHtmlConfirmacion();
+  } catch (error) {
+    await Swal.fire({
+      icon: 'error',
+      title: 'No se pudo cargar el gasto',
+      text: error.message || 'No se pudo obtener la información del gasto para confirmar el pago.',
+      confirmButtonColor: '#e11d48'
+    });
+    return;
+  }
+
+  const { isConfirmed } = await Swal.fire({
+    icon: 'question',
+    title: 'Confirmar pago',
+    html: confirmacionHtml,
+    showCancelButton: true,
+    confirmButtonText: 'Sí, registrar pago',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#0f766e',
+    cancelButtonColor: '#64748b',
+    width: 620
+  });
+
+  if (!isConfirmed) return;
+
   saving.value = true;
   errorMessage.value = '';
 
@@ -189,9 +301,23 @@ const confirmarPago = async () => {
     };
 
     const result = await tesoreriaService.registrarPago(payload);
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Pago registrado',
+      text: result?.message || 'El pago se registró correctamente.',
+      confirmButtonColor: '#0f766e'
+    });
+
     emit('paid', result?.data || null);
     emit('close');
   } catch (error) {
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error al registrar pago',
+      text: error.message || 'No se pudo registrar el pago.',
+      confirmButtonColor: '#e11d48'
+    });
     errorMessage.value = error.message || 'No se pudo registrar el pago.';
   } finally {
     saving.value = false;

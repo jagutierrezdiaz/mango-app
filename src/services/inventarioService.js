@@ -776,11 +776,21 @@ export const sincronizarCompraDerivados = async (connection, compra = {}, option
     (acc, item) => acc + Number(item.valor_subtotal || 0),
     0
   ));
+  const ivaTotal = roundMoney(detalles.reduce(
+    (acc, item) => {
+      const cantidad = Number(item.cantidad || 0);
+      const costoUnitario = Number(item.costo_unitario || 0);
+      const ivaPorcentaje = Number(item.iva_porcentaje || 0);
+      return acc + (cantidad * costoUnitario * ivaPorcentaje / 100);
+    },
+    0
+  ));
 
-  if (montoCompra > 0) {
+  if (montoCompra > 0 || ivaTotal > 0) {
     await registrarAsientoCompra(connection, {
       compra_id: compraId,
       monto: montoCompra,
+      iva_total: ivaTotal,
       forma_pago: compra.forma_pago,
       fecha: compra.fecha_pagada || compra.fecha_compra,
       numero_documento: compra.numero_documento,

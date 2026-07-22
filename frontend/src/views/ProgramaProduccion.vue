@@ -3,7 +3,7 @@
     <div class="mb-7 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4 border-b border-slate-200 pb-6">
       <div>
         <h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">Produccion</h1>
-        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Patio Bohemio / Programacion de Produccion</p>
+        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Programacion de Produccion</p>
       </div>
 
       <div class="w-full xl:w-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

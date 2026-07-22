@@ -45,7 +45,7 @@
         <div v-if="activeSessions.length" class="pb-support-console-grid">
           <article v-for="session in activeSessions" :key="session.support_id" class="pb-support-session-card">
             <h3>{{ session.card_label || `${session.rol_vista || 'Operacion'} - ${session.user_local || 'Sede principal'}` }}</h3>
-            <p class="pb-support-session-user">{{ session.user_name || 'Usuario Patio Bohemio' }}</p>
+            <p class="pb-support-session-user">{{ session.user_name || 'Usuario' }}</p>
             <p class="pb-support-session-id">ID: {{ session.support_id }}</p>
             <button type="button" class="pb-btn pb-btn-primary" @click="enterSupportSession(session)">
               ENTRAR A SOPORTE
@@ -183,7 +183,7 @@ const chatInput = ref('')
 const chatMessages = ref([])
 const sessionElapsedSeconds = ref(0)
 const recentHistory = ref([])
-const currentSessionMeta = ref({ modulo: 'Operacion', user: 'Usuario Patio Bohemio' })
+const currentSessionMeta = ref({ modulo: 'Operacion', user: 'Usuario' })
 
 const consoleAuthorized = ref(sessionStorage.getItem('support-console-ok') === '1')
 const consolePassword = ref('')
@@ -387,7 +387,7 @@ const attachSocketListeners = () => {
     if (current) {
       currentSessionMeta.value = {
         modulo: String(current.rol_vista || 'Operacion'),
-        user: String(current.user_name || 'Usuario Patio Bohemio')
+        user: String(current.user_name || 'Usuario')
       }
     }
   })
@@ -460,7 +460,7 @@ const handleActiveSessionsAck = (ack = {}) => {
   if (current) {
     currentSessionMeta.value = {
       modulo: String(current.rol_vista || 'Operacion'),
-      user: String(current.user_name || 'Usuario Patio Bohemio')
+      user: String(current.user_name || 'Usuario')
     }
   }
 }
@@ -723,7 +723,7 @@ const startViewer = async () => {
       if (ack?.success && ack?.active) {
         currentSessionMeta.value = {
           modulo: String(ack.rol_vista || 'Operacion'),
-          user: String(ack.user_name || 'Usuario Patio Bohemio')
+          user: String(ack.user_name || 'Usuario')
         }
       }
     })
@@ -788,7 +788,7 @@ const enterSupportSession = (session = {}) => {
 
   currentSessionMeta.value = {
     modulo: String(session.rol_vista || 'Operacion'),
-    user: String(session.user_name || 'Usuario Patio Bohemio')
+    user: String(session.user_name || 'Usuario')
   }
 
   router.push(`/soporte/${targetId}`)
@@ -802,7 +802,7 @@ const saveSupportLog = async () => {
   const payload = {
     support_id: supportId.value,
     modulo: String(currentSessionMeta.value?.modulo || 'Operacion'),
-    user: String(currentSessionMeta.value?.user || 'Usuario Patio Bohemio'),
+    user: String(currentSessionMeta.value?.user || 'Usuario'),
     tiempo: sessionElapsedLabel.value
   }
 

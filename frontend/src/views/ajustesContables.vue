@@ -2,7 +2,7 @@
   <div class="ajustes-view admin-crud-shell min-h-screen w-full max-w-7xl p-4 md:p-6 mx-auto">
     <div class="mb-6 border-b border-slate-200 pb-4">
       <h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">AJUSTES CONTABLES</h1>
-      <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Patio Bohemio / Monitor de Ajustes Operativos</p>
+      <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Monitor de Ajustes Operativos</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

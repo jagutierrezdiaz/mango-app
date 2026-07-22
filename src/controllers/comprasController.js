@@ -7,6 +7,7 @@ import { registrarAsientoPagoFacturaCompra } from '../services/contabilidadServi
 
 const TIPOS_DOCUMENTO = ['Factura Electrónica', 'Documento Soporte', 'Recibo de Caja', 'Remisión'];
 const ESTADOS_PAGO = ['Pendiente', 'Pagado', 'Pagada', 'Parcial', 'Anulado'];
+const COMPRA_EDITABLE_ESTADO = 'Pendiente';
 const FORMAS_PAGO = ['Contado', 'Crédito', 'Crédito 15 días', 'Crédito 30 días'];
 const CUENTAS_PAGO_COMPRAS = ['110510', '110515', '111005'];
 
@@ -19,6 +20,19 @@ const DETALLE_COMPRA_ERROR_LOG = path.join(process.cwd(), 'logs', 'backend-detal
 const normalizeFormaPago = (value, fallback = 'Contado') => {
   const trimmed = String(value ?? fallback).trim();
   return LEGACY_FORMA_PAGO_ALIASES[trimmed] || trimmed;
+};
+
+const mensajeCompraNoEditable = (estadoPago) =>
+  `No se puede modificar una compra con estado "${estadoPago}". Solo se permiten compras en estado ${COMPRA_EDITABLE_ESTADO}.`;
+
+const assertCompraPendiente = (compra) => {
+  if (!compra) {
+    return { ok: false, status: 404, message: 'Compra no encontrada' };
+  }
+  if (compra.estado_pago !== COMPRA_EDITABLE_ESTADO) {
+    return { ok: false, status: 400, message: mensajeCompraNoEditable(compra.estado_pago) };
+  }
+  return { ok: true, compra };
 };
 
 const logBackendError = (functionName, error) => {
@@ -551,10 +565,16 @@ export const updateCompra = async (req, res) => {
     const fechaCompra = toSqlDateTimeString(payload.fecha_compra);
     const fechaPagada = toSqlDateTimeString(payload.fecha_pagada);
 
-    const [existing] = await connection.query('SELECT id FROM compras WHERE id = ? LIMIT 1', [id]);
+    const [existing] = await connection.query('SELECT id, estado_pago FROM compras WHERE id = ? LIMIT 1 FOR UPDATE', [id]);
     if (!existing.length) {
       await connection.rollback();
       return res.status(404).json({ success: false, message: 'Compra no encontrada' });
+    }
+
+    const validacionEstado = assertCompraPendiente(existing[0]);
+    if (!validacionEstado.ok) {
+      await connection.rollback();
+      return res.status(validacionEstado.status).json({ success: false, message: validacionEstado.message });
     }
 
     await connection.query(
@@ -670,6 +690,12 @@ export const deleteCompra = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Compra no encontrada' });
     }
 
+    const validacionEstado = assertCompraPendiente(compraEliminada);
+    if (!validacionEstado.ok) {
+      await connection.rollback();
+      return res.status(validacionEstado.status).json({ success: false, message: validacionEstado.message });
+    }
+
     await eliminarMovimientosCompra(connection, Number(id));
     await connection.query('DELETE FROM movimientos_contables WHERE referencia_tabla = ? AND referencia_id = ?', ['compras', Number(id)]);
     await connection.query('DELETE FROM movimientos_contables WHERE referencia_tabla = ? AND referencia_id = ?', ['compras_anulacion', Number(id)]);
@@ -753,6 +779,16 @@ export const createDetalleCompra = async (req, res) => {
     stage = 'begin_transaction';
     traceDetalleCompraStage('createDetalleCompra', stage, { compraId, articuloId: detalle.articulo_id });
     await connection.beginTransaction();
+
+    const [compraRows] = await connection.query(
+      'SELECT id, estado_pago FROM compras WHERE id = ? LIMIT 1 FOR UPDATE',
+      [Number(compraId)]
+    );
+    const validacionEstado = assertCompraPendiente(compraRows[0]);
+    if (!validacionEstado.ok) {
+      await connection.rollback();
+      return res.status(validacionEstado.status).json({ success: false, message: validacionEstado.message });
+    }
 
     if (!Number.isInteger(detalle.articulo_id) || detalle.articulo_id <= 0) {
       await connection.rollback();
@@ -929,6 +965,16 @@ export const updateDetalleCompra = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Detalle no encontrado' });
     }
 
+    const [compraRows] = await connection.query(
+      'SELECT id, estado_pago FROM compras WHERE id = ? LIMIT 1 FOR UPDATE',
+      [Number(detalleActual.compra_id)]
+    );
+    const validacionEstado = assertCompraPendiente(compraRows[0]);
+    if (!validacionEstado.ok) {
+      await connection.rollback();
+      return res.status(validacionEstado.status).json({ success: false, message: validacionEstado.message });
+    }
+
     stage = 'update_compras_detalle';
     traceDetalleCompraStage('updateDetalleCompra', stage, { compraId: detalleActual.compra_id, detalleId: id, articuloId: detalle.articulo_id });
     const [result] = await connection.query(
@@ -1096,6 +1142,16 @@ export const deleteDetalleCompra = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Detalle no encontrado' });
     }
 
+    const [compraRows] = await connection.query(
+      'SELECT id, estado_pago FROM compras WHERE id = ? LIMIT 1 FOR UPDATE',
+      [Number(detalleEliminado.compra_id)]
+    );
+    const validacionEstado = assertCompraPendiente(compraRows[0]);
+    if (!validacionEstado.ok) {
+      await connection.rollback();
+      return res.status(validacionEstado.status).json({ success: false, message: validacionEstado.message });
+    }
+
     stage = 'delete_compras_detalle';
     traceDetalleCompraStage('deleteDetalleCompra', stage, { compraId: detalleEliminado.compra_id, detalleId: id, articuloId: detalleEliminado.articulo_id });
     const [result] = await connection.query('DELETE FROM compras_detalle WHERE id = ?', [id]);
@@ -1187,8 +1243,40 @@ export const deleteDetalleCompra = async (req, res) => {
   }
 };
 
-export const getCuentasPorPagar = async (_req, res) => {
+export const getCuentasPorPagar = async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Surrogate-Control', 'no-store');
+
+    const fechaInicio = String(req.query?.fecha_inicio || '').trim();
+    const fechaFinal = String(req.query?.fecha_final || '').trim();
+    const estadoPago = String(req.query?.estado_pago || 'Pendiente').trim();
+
+    const where = [];
+    const params = [];
+
+    if (fechaInicio && /^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
+      where.push('DATE(c.fecha_compra) >= ?');
+      params.push(fechaInicio);
+    }
+
+    if (fechaFinal && /^\d{4}-\d{2}-\d{2}$/.test(fechaFinal)) {
+      where.push('DATE(c.fecha_compra) <= ?');
+      params.push(fechaFinal);
+    }
+
+    if (estadoPago === 'Pagada') {
+      where.push("c.estado_pago IN ('Pagada', 'Pagado')");
+    } else if (estadoPago === 'Todos') {
+      where.push("c.estado_pago NOT IN ('Anulado')");
+    } else {
+      where.push("c.estado_pago IN ('Pendiente', 'Parcial')");
+    }
+
+    const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
     const [rows] = await db.query(
       `SELECT
          c.id,
@@ -1212,8 +1300,9 @@ export const getCuentasPorPagar = async (_req, res) => {
          ), 0) AS total_pagado
        FROM compras c
        INNER JOIN proveedores p ON p.id = c.proveedor_id
-       WHERE c.estado_pago IN ('Pendiente', 'Parcial')
-       ORDER BY c.fecha_compra ASC`
+       ${whereClause}
+       ORDER BY c.fecha_compra ASC`,
+      params
     );
 
     const data = rows.map((row) => {

@@ -3,7 +3,7 @@
     <div class="mb-8 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5 border-b border-slate-200 pb-6">
       <div>
         <h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">Costos</h1>
-        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Patio Bohemio / Flujo de Costos</p>
+        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Flujo de Costos</p>
       </div>
 
       <div class="flex flex-col lg:flex-row gap-3 w-full xl:w-auto xl:min-w-[880px]">

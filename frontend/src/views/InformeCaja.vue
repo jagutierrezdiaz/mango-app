@@ -5,7 +5,7 @@
       <div>
         <h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">Informe de
           Ventas</h1>
-        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Patio Bohemio / Histórico de
+        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Histórico de
           Ventas Registradas</p>
       </div>
 
@@ -700,7 +700,7 @@ export default {
           </head>
           <body>
             <div class="report-head">
-              <div class="logo-wrap"><img src="${COMPANY_LOGO_URL}" alt="Logo Patio Bohemio"></div>
+              <div class="logo-wrap"><img src="${COMPANY_LOGO_URL}" alt="Logo"></div>
               <div class="report-head-title">Informe de Ventas</div>
               <div class="report-head-date">Fecha: ${formatFechaEmision()}</div>
             </div>

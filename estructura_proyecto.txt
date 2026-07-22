@@ -1,4 +1,4 @@
-﻿Patio Bohemio App - Estructura vigente (resumen)
+﻿Mango App - Estructura vigente (resumen)
 Actualizado: 2026-06-30
 
 .

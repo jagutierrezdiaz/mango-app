@@ -6,6 +6,7 @@ import {
   createGasto,
   deleteGasto,
   getGastoById,
+  getGastoResumenPago,
   getGastos,
   getPucGruposGastos,
   getPucSubcuentasGastos,
@@ -31,6 +32,7 @@ const upload = multer({
 router.get('/', verifyToken, getGastos);
 router.get('/puc/grupos', verifyToken, getPucGruposGastos);
 router.get('/puc/subcuentas', verifyToken, getPucSubcuentasGastos);
+router.get('/:id/resumen-pago', verifyToken, getGastoResumenPago);
 router.get('/:id', verifyToken, getGastoById);
 router.post('/', verifyToken, upload.single('comprobante'), createGasto);
 router.put('/:id', verifyToken, upload.single('comprobante'), updateGasto);

@@ -192,7 +192,7 @@
       >
         <!-- [ELEMENTO] LogoPanelPago -->
         <div class="flex justify-center mb-6">
-          <img src="/img/logo.png" alt="Logo Patio Bohemio" class="h-14 w-auto object-contain panel-pago-logo" @error="handleImageError">
+          <img src="/img/logo.png" alt="Logo" class="h-14 w-auto object-contain panel-pago-logo" @error="handleImageError">
         </div>
 
         <!-- Totales -->
@@ -461,14 +461,15 @@
               <button
                 type="button"
                 class="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-wide px-7 py-2.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                :disabled="savingPago || (Math.round(totalRecibido) < Math.round(totalFinalPago))"
+                :disabled="savingPago || !puedeRegistrarPago"
                 @click="registrarPago"
               >
                 <i :class="savingPago ? 'fas fa-circle-notch fa-spin' : 'fas fa-cash-register'"></i>
                 <span>{{ savingPago ? 'Registrando...' : 'Registrar Pago' }}</span>
               </button>
 
-              <p v-if="!puedeRegistrarPago" class="text-xs font-semibold text-slate-500 mt-2">No se puede registrar el pago, el dinero recibido por el cliente no es suficiente.</p>
+              <p v-if="Math.round(totalRecibido) < Math.round(totalFinalPago)" class="text-xs font-semibold text-slate-500 mt-2">No se puede registrar el pago, el dinero recibido por el cliente no es suficiente.</p>
+              <p v-else-if="efectivoInsuficienteParaDevuelta" class="text-xs font-semibold text-slate-500 mt-2">La devuelta se entrega en efectivo. El efectivo recibido debe ser mayor o igual a la devuelta.</p>
             </div>
             </article>
 
@@ -704,7 +705,35 @@ export default {
     // --- Devuelta: diferencia entre recibido y total a pagar ---
     const devueltaPago = computed(() => roundMoney(totalRecibido.value - totalFinalPago.value));
 
-    const puedeRegistrarPago = computed(() => Math.round(totalRecibido.value) >= Math.round(totalFinalPago.value));
+    const devueltaPositiva = computed(() => {
+      if (totalRecibido.value < totalFinalPago.value) return 0;
+      return Math.round(totalRecibido.value - totalFinalPago.value);
+    });
+
+    const montoEfectivoNeto = computed(() => {
+      if (!montoEfectivoHabilitado.value) return 0;
+      const bruto = Number(payment.value.monto_efectivo) || 0;
+      if (devueltaPositiva.value > 0) {
+        return Math.max(0, Math.round(bruto - devueltaPositiva.value));
+      }
+      return bruto;
+    });
+
+    const montoDigitalNeto = computed(() => (
+      montoTransferenciaHabilitado.value ? Number(payment.value.monto_transferencia) || 0 : 0
+    ));
+
+    const efectivoInsuficienteParaDevuelta = computed(() => {
+      if (devueltaPositiva.value <= 0) return false;
+      const bruto = Number(payment.value.monto_efectivo) || 0;
+      return bruto < devueltaPositiva.value;
+    });
+
+    const puedeRegistrarPago = computed(() => {
+      if (Math.round(totalRecibido.value) < Math.round(totalFinalPago.value)) return false;
+      if (efectivoInsuficienteParaDevuelta.value) return false;
+      return true;
+    });
 
     const cargarCaja = async ({ silent = false } = {}) => {
       loading.value = true;
@@ -1005,6 +1034,20 @@ export default {
         }
       }
 
+      if (devueltaPositiva.value > 0 && efectivoRecibido < devueltaPositiva.value) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Devuelta en efectivo',
+          text: 'La devuelta se entrega en efectivo. El efectivo recibido debe ser mayor o igual a la devuelta.'
+        });
+        return;
+      }
+
+      const ticketEfectivoBruto = Number(payment.value.monto_efectivo || 0);
+      const ticketTransferencia = montoDigitalNeto.value;
+      const ticketTotalRecibido = totalRecibido.value;
+      const ticketDevuelta = devueltaPositiva.value;
+
       savingPago.value = true;
       try {
         const paidComandaId = Number(selectedComanda.value.id);
@@ -1013,8 +1056,9 @@ export default {
           arqueo_id: null,
           aporte_servicio: servicioVoluntarioEditable.value,
           metodo_pago: payment.value.metodo_pago,
-          monto_efectivo: montoEfectivoHabilitado.value ? payment.value.monto_efectivo : 0,
-          monto_digital: montoTransferenciaHabilitado.value ? payment.value.monto_transferencia : 0,
+          monto_efectivo: montoEfectivoNeto.value,
+          monto_efectivo_bruto: ticketEfectivoBruto,
+          monto_digital: montoDigitalNeto.value,
           notas: payment.value.notas || null
         });
 
@@ -1022,8 +1066,10 @@ export default {
         if (data?.venta) {
           imprimirTicket({
             ...data.venta,
-            total_recibido: data.total_recibido,
-            cambio: data.cambio
+            monto_efectivo: ticketEfectivoBruto,
+            monto_digital: ticketTransferencia,
+            total_recibido: ticketTotalRecibido,
+            cambio: ticketDevuelta
           });
         }
 
@@ -1151,6 +1197,7 @@ export default {
       totalRecibido,
       devueltaPago,
       puedeRegistrarPago,
+      efectivoInsuficienteParaDevuelta,
       showAudioAlert,
       activatingAudio,
       cargarCaja,

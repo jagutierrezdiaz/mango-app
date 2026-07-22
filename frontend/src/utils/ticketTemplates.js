@@ -287,4 +287,60 @@ function buildPrecuentaHtml(ticket, businessInfo, logoSrc, opts = {}) {
         </html>`;
 }
 
-export { buildTicketHtml, buildPrecuentaHtml, buildComandaCocinaHtml, buildFiscalFooterHtml, formatNumeroControl };
+function buildReporteCajaHtml(reporte, businessInfo, logoSrc, opts = {}) {
+  const info = resolveBusinessInfo(businessInfo);
+  const filas = Array.isArray(reporte?.filas) ? reporte.filas : [];
+  const fechaText = reporte?.fecha
+    ? new Date(`${reporte.fecha}T12:00:00`).toLocaleDateString('es-CO')
+    : new Date().toLocaleDateString('es-CO');
+  const sum = (key) => filas.reduce((acc, row) => acc + roundMoney(row[key]), 0);
+
+  const filasHtml = filas.map((row) => `
+    <div class="item-block">
+      <div class="item-name">${row.Metodo_Pago || 'Sin metodo'}</div>
+      ${buildTotalRow('Total pagado', formatCurrency(row.Total_Pagado))}
+      ${buildTotalRow('Venta efectivo', formatCurrency(row.Venta_Efectivo))}
+      ${buildTotalRow('Servicio efectivo', formatCurrency(row.Servicio_Efectivo))}
+      ${buildTotalRow('Venta transferencia', formatCurrency(row.Venta_Transferencia))}
+      ${buildTotalRow('Servicio transferencia', formatCurrency(row.Servicio_Transferencia))}
+      <hr style="border-top: 1px dashed #000">
+    </div>
+  `).join('\n');
+
+  const bodyOnload = opts.skipAutoPrint ? '' : ' onload="window.print();"';
+
+  return `<!doctype html>
+        <html>
+        <head>
+        <meta charset="utf-8">
+        <title>Reporte de Caja ${fechaText}</title>
+        <style>${THERMAL_TICKET_STYLES}</style>
+        </head>
+        <body${bodyOnload}>
+        <div class="wrapper">
+          <div class="logo-row">
+            <img src="${logoSrc}" alt="Logo ${info.identificacion.razonSocial}" class="logo" onerror="this.style.display='none'" />
+          </div>
+          <div class="center">${info.identificacion.razonSocial}<br><span class="small">Reporte de Caja</span></div>
+          <hr>
+          <div>Fecha: ${fechaText}</div>
+          <div>Cajero: ${reporte?.cajero_nombre || 'Turno activo'}</div>
+          <hr>
+          <div class="center">RESUMEN POR METODO DE PAGO</div>
+          <hr>
+          ${filasHtml || '<div class="center small">Sin ventas registradas hoy.</div>'}
+          <div class="clear"></div>
+          <hr>
+          ${buildTotalRow('Total pagado', formatCurrency(sum('Total_Pagado')), true)}
+          ${buildTotalRow('Venta efectivo', formatCurrency(sum('Venta_Efectivo')))}
+          ${buildTotalRow('Servicio efectivo', formatCurrency(sum('Servicio_Efectivo')))}
+          ${buildTotalRow('Venta transferencia', formatCurrency(sum('Venta_Transferencia')))}
+          ${buildTotalRow('Servicio transferencia', formatCurrency(sum('Servicio_Transferencia')))}
+          <hr>
+          ${buildFiscalFooterHtml(info)}
+        </div>
+        </body>
+        </html>`;
+}
+
+export { buildTicketHtml, buildPrecuentaHtml, buildComandaCocinaHtml, buildReporteCajaHtml, buildFiscalFooterHtml, formatNumeroControl };

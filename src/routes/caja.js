@@ -5,6 +5,7 @@ import {
   getComandaCajaById,
   registrarPagoCaja,
   getMovimientosCajaHoy,
+  getReporteCajaHoy,
   registrarGastoCaja,
   debugCajaSchema
 } from '../controllers/cajaController.js';
@@ -48,6 +49,7 @@ router.get('/comandas', guard(['CAJERO', 'CAJERO(A)']), getComandasPendientesCaj
 router.get('/comandas/:id', guard(['CAJERO', 'CAJERO(A)']), getComandaCajaById);
 router.post('/pagos', guard(['CAJERO', 'CAJERO(A)']), registrarPagoCaja);
 router.get('/movimientos-hoy', guard(['CAJERO', 'CAJERO(A)', 'Administrador']), getMovimientosCajaHoy);
+router.get('/reporte-caja-hoy', guard(['CAJERO', 'CAJERO(A)', 'Administrador']), getReporteCajaHoy);
 router.post('/gastos', guard(['CAJERO', 'CAJERO(A)']), registrarGastoCaja);
 router.get('/mostrador/mesas', guard(['CAJERO', 'CAJERO(A)']), getMesasMostrador);
 router.get('/mostrador/productos-activos', guard(['CAJERO', 'CAJERO(A)']), getProductosActivosMostrador);

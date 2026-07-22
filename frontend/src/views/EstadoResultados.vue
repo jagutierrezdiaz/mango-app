@@ -3,7 +3,7 @@
     <div class="mb-8 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5 border-b border-slate-200 pb-6">
       <div>
         <h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">Estado de Resultados</h1>
-        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Patio Bohemio / Reporte mensual de devengo contable</p>
+        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Reporte mensual de devengo contable</p>
       </div>
 
       <div class="flex flex-col lg:flex-row gap-3 w-full xl:w-auto xl:min-w-[760px]">
@@ -29,9 +29,9 @@
         </div>
 
         <div class="flex flex-wrap gap-2 items-end">
-          <button @click="exportarPDF" :disabled="loading || !report" class="flex-1 lg:flex-none pb-btn pb-btn-export pb-btn-unified px-5 py-3 text-[11px] whitespace-nowrap">
-            <i class="fas fa-file-pdf"></i>
-            <span>PDF</span>
+          <button @click="exportarExcel" :disabled="loading || !report" class="flex-1 lg:flex-none pb-btn pb-btn-excel pb-btn-unified px-5 py-3 text-[11px] whitespace-nowrap">
+            <i class="fas fa-file-excel"></i>
+            <span>Exportar</span>
           </button>
           <button @click="imprimirReporte" :disabled="loading || !report" class="flex-1 lg:flex-none pb-btn pb-btn-print pb-btn-unified px-5 py-3 text-[11px] whitespace-nowrap">
             <i class="fas fa-print"></i>
@@ -88,7 +88,7 @@
               <thead class="bg-slate-100">
                 <tr>
                   <th class="th-cell">Estructura</th>
-                  <th class="th-cell">Detalle por Grupo PUC</th>
+                  <th class="th-cell">Detalle por Grupo / Cuenta PUC</th>
                   <th class="th-cell text-right">Total</th>
                 </tr>
               </thead>
@@ -100,10 +100,20 @@
                 <tr v-if="!ingresosRows.length" class="border-t border-emerald-100">
                   <td class="td-cell text-xs text-slate-500" colspan="3">Sin desgloses de grupos para ingresos en este período.</td>
                 </tr>
-                <tr v-for="row in ingresosRows" :key="`ing-${row.grupo}`" class="border-t border-emerald-100">
-                  <td class="td-cell text-[12px] text-emerald-700 pl-8" colspan="2">{{ row.grupo }} - {{ row.nombre }}</td>
-                  <td class="td-cell text-right text-[12px] font-semibold text-emerald-700 num-entero">{{ formatMoney(row.total) }}</td>
-                </tr>
+                <template v-for="row in ingresosRows" :key="`ing-${row.grupo}`">
+                  <tr class="border-t border-emerald-100">
+                    <td class="td-cell text-[12px] text-emerald-700 pl-8 font-semibold" colspan="2">{{ row.grupo }} - {{ row.nombre }}</td>
+                    <td class="td-cell text-right text-[12px] font-semibold text-emerald-700 num-entero">{{ formatMoney(row.total) }}</td>
+                  </tr>
+                  <tr
+                    v-for="cuenta in row.cuentas"
+                    :key="`ing-${row.grupo}-${cuenta.codigo}`"
+                    class="border-t border-emerald-50"
+                  >
+                    <td class="td-cell text-[11px] text-emerald-600 pl-14" colspan="2">{{ cuenta.codigo }} - {{ cuenta.nombre }}</td>
+                    <td class="td-cell text-right text-[11px] text-emerald-600 num-entero">{{ formatMoney(cuenta.total) }}</td>
+                  </tr>
+                </template>
 
                 <tr class="border-t border-amber-100 bg-amber-50/70">
                   <td class="td-cell font-black text-amber-700" colspan="2">(-) Costos de Ventas - Clase 6</td>
@@ -112,10 +122,20 @@
                 <tr v-if="!costosRows.length" class="border-t border-amber-100">
                   <td class="td-cell text-xs text-slate-500" colspan="3">Sin desgloses de grupos para costos de ventas en este período.</td>
                 </tr>
-                <tr v-for="row in costosRows" :key="`cos-${row.grupo}`" class="border-t border-amber-100">
-                  <td class="td-cell text-[12px] text-amber-700 pl-8" colspan="2">{{ row.grupo }} - {{ row.nombre }}</td>
-                  <td class="td-cell text-right text-[12px] font-semibold text-amber-700 num-entero">{{ formatMoney(row.total) }}</td>
-                </tr>
+                <template v-for="row in costosRows" :key="`cos-${row.grupo}`">
+                  <tr class="border-t border-amber-100">
+                    <td class="td-cell text-[12px] text-amber-700 pl-8 font-semibold" colspan="2">{{ row.grupo }} - {{ row.nombre }}</td>
+                    <td class="td-cell text-right text-[12px] font-semibold text-amber-700 num-entero">{{ formatMoney(row.total) }}</td>
+                  </tr>
+                  <tr
+                    v-for="cuenta in row.cuentas"
+                    :key="`cos-${row.grupo}-${cuenta.codigo}`"
+                    class="border-t border-amber-50"
+                  >
+                    <td class="td-cell text-[11px] text-amber-600 pl-14" colspan="2">{{ cuenta.codigo }} - {{ cuenta.nombre }}</td>
+                    <td class="td-cell text-right text-[11px] text-amber-600 num-entero">{{ formatMoney(cuenta.total) }}</td>
+                  </tr>
+                </template>
 
                 <tr class="border-t-2 border-cyan-200 bg-cyan-50">
                   <td class="td-cell font-black text-cyan-700" colspan="2">(=) Utilidad Bruta</td>
@@ -129,10 +149,20 @@
                 <tr v-if="!gastosRows.length" class="border-t border-violet-100">
                   <td class="td-cell text-xs text-slate-500" colspan="3">Sin desgloses de grupos para gastos operacionales en este período.</td>
                 </tr>
-                <tr v-for="row in gastosRows" :key="`gas-${row.grupo}`" class="border-t border-violet-100">
-                  <td class="td-cell text-[12px] text-violet-700 pl-8" colspan="2">{{ row.grupo }} - {{ row.nombre }}</td>
-                  <td class="td-cell text-right text-[12px] font-semibold text-violet-700 num-entero">{{ formatMoney(row.total) }}</td>
-                </tr>
+                <template v-for="row in gastosRows" :key="`gas-${row.grupo}`">
+                  <tr class="border-t border-violet-100">
+                    <td class="td-cell text-[12px] text-violet-700 pl-8 font-semibold" colspan="2">{{ row.grupo }} - {{ row.nombre }}</td>
+                    <td class="td-cell text-right text-[12px] font-semibold text-violet-700 num-entero">{{ formatMoney(row.total) }}</td>
+                  </tr>
+                  <tr
+                    v-for="cuenta in row.cuentas"
+                    :key="`gas-${row.grupo}-${cuenta.codigo}`"
+                    class="border-t border-violet-50"
+                  >
+                    <td class="td-cell text-[11px] text-violet-600 pl-14" colspan="2">{{ cuenta.codigo }} - {{ cuenta.nombre }}</td>
+                    <td class="td-cell text-right text-[11px] text-violet-600 num-entero">{{ formatMoney(cuenta.total) }}</td>
+                  </tr>
+                </template>
 
                 <tr class="border-t-2" :class="summary.utilidad_neta >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'">
                   <td class="td-cell font-black" colspan="2">(=) Utilidad Neta</td>
@@ -150,7 +180,7 @@
 <script>
 import { computed, onMounted, ref } from 'vue';
 import { estadoResultadosService } from '../services/estadoResultadosService.js';
-import { getPdfTools } from '../utils/lazyVendors.js';
+import { getXLSX } from '../utils/lazyVendors.js';
 import { businessInfo } from '../config/businessInfo.js';
 
 const MONTHS_FALLBACK = [
@@ -173,10 +203,6 @@ const COMPANY_LOGO_URL = '/img/logo.png';
 export default {
   name: 'EstadoResultados',
   setup() {
-    let jsPDF = null;
-    let autoTable = null;
-    let logoDataUrl = null;
-
     const now = new Date();
     const loading = ref(false);
     const report = ref(null);
@@ -207,10 +233,17 @@ export default {
       utilidad_neta: parseNumber(report.value?.resumen?.utilidad_neta)
     }));
 
+    const normalizeAccountRows = (rows) => (Array.isArray(rows) ? rows : []).map((cuenta) => ({
+      codigo: String(cuenta?.codigo || '').trim(),
+      nombre: String(cuenta?.nombre || '').trim(),
+      total: parseNumber(cuenta?.total)
+    }));
+
     const normalizeDetailRows = (rows) => (Array.isArray(rows) ? rows : []).map((row) => ({
       grupo: String(row?.grupo || '').trim(),
       nombre: String(row?.nombre || '').trim(),
-      total: parseNumber(row?.total)
+      total: parseNumber(row?.total),
+      cuentas: normalizeAccountRows(row?.cuentas)
     }));
 
     const ingresosRows = computed(() => normalizeDetailRows(report.value?.ingresos?.detalles));
@@ -220,69 +253,134 @@ export default {
       return normalizeDetailRows(rows);
     });
 
-    const buildPdfBreakdownRows = () => {
-      const sections = [
-        { section: 'Ingresos (Clase 4)', rows: ingresosRows.value, empty: 'Sin ingresos por grupo en el período.' },
-        { section: 'Costos (Clase 6)', rows: costosRows.value, empty: 'Sin costos por grupo en el período.' },
-        { section: 'Gastos (Clase 5)', rows: gastosRows.value, empty: 'Sin gastos por grupo en el período.' }
-      ];
+    const getBreakdownSections = () => [
+      {
+        title: '(+) Ingresos - Clase 4',
+        className: 'ingresos',
+        rows: ingresosRows.value,
+        empty: 'Sin desgloses de ingresos para el período.',
+        total: summary.value.ingresos
+      },
+      {
+        title: '(-) Costos de Ventas - Clase 6',
+        className: 'costos',
+        rows: costosRows.value,
+        empty: 'Sin desgloses de costos para el período.',
+        total: summary.value.costos_ventas
+      },
+      {
+        title: '(-) Gastos Operacionales - Clase 5',
+        className: 'gastos',
+        rows: gastosRows.value,
+        empty: 'Sin desgloses de gastos para el período.',
+        total: summary.value.gastos_operacionales
+      }
+    ];
 
+    const buildBreakdownRows = () => {
       const output = [];
-      for (const item of sections) {
-        if (!item.rows.length) {
-          output.push([item.section, '-', item.empty, '-']);
+
+      for (const section of getBreakdownSections()) {
+        output.push({
+          label: section.title,
+          total: section.total,
+          kind: 'section',
+          className: section.className
+        });
+
+        if (!section.rows.length) {
+          output.push({
+            label: section.empty,
+            total: null,
+            kind: 'empty',
+            className: section.className
+          });
           continue;
         }
 
-        item.rows.forEach((row, index) => {
-          output.push([
-            index === 0 ? item.section : '',
-            row.grupo,
-            row.nombre,
-            formatMoney(row.total)
-          ]);
+        section.rows.forEach((row) => {
+          output.push({
+            label: `${row.grupo} - ${row.nombre}`,
+            total: row.total,
+            kind: 'detail',
+            className: section.className
+          });
+
+          (row.cuentas || []).forEach((cuenta) => {
+            output.push({
+              label: `${cuenta.codigo} - ${cuenta.nombre}`,
+              total: cuenta.total,
+              kind: 'account',
+              className: section.className
+            });
+          });
         });
       }
 
       return output;
     };
 
-    const buildPrintBreakdownRows = () => {
-      const sections = [
-        { title: '(+) Ingresos - Clase 4', className: 'ingresos', rows: ingresosRows.value, empty: 'Sin desgloses de ingresos para el período.' },
-        { title: '(-) Costos de Ventas - Clase 6', className: 'costos', rows: costosRows.value, empty: 'Sin desgloses de costos para el período.' },
-        { title: '(-) Gastos Operacionales - Clase 5', className: 'gastos', rows: gastosRows.value, empty: 'Sin desgloses de gastos para el período.' }
+    const buildPrintBreakdownRows = () => buildBreakdownRows().map((row) => {
+      const totalCell = row.kind === 'empty'
+        ? '-'
+        : formatMoney(row.total);
+
+      if (row.kind === 'section') {
+        return `
+          <tr class="section-row ${row.className}">
+            <td>${row.label}</td>
+            <td class="text-right num-entero">${totalCell}</td>
+          </tr>
+        `;
+      }
+
+      if (row.kind === 'empty') {
+        return `
+          <tr class="detail-row empty">
+            <td>${row.label}</td>
+            <td class="text-right">${totalCell}</td>
+          </tr>
+        `;
+      }
+
+      const rowClass = row.kind === 'account' ? 'detail-row account-row' : 'detail-row';
+      const padding = row.kind === 'account' ? ' style="padding-left:28px;"' : '';
+
+      return `
+        <tr class="${rowClass} ${row.className}">
+          <td${padding}>${row.label}</td>
+          <td class="text-right num-entero">${totalCell}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const buildExcelSheetRows = () => {
+      const periodo = report.value?.periodo?.etiqueta || periodLabel.value;
+
+      const rows = [
+        ['Estado de Resultados', '', `Fecha: ${formatFechaEmision()}`],
+        [businessInfo.identificacion.razonSocial],
+        [`${businessInfo.identificacion.tipoDocumento}: ${businessInfo.identificacion.numeroDocumento}`],
+        [`Periodo: ${periodo}`],
+        [],
+        ['Concepto', 'Total'],
+        ['(+) Ingresos (Clase 4)', Math.round(summary.value.ingresos)],
+        ['(-) Costos de Ventas (Clase 6)', Math.round(summary.value.costos_ventas)],
+        ['(=) Utilidad Bruta', Math.round(summary.value.utilidad_bruta)],
+        ['(-) Gastos Operacionales (Clase 5)', Math.round(summary.value.gastos_operacionales)],
+        ['(=) Utilidad Neta', Math.round(summary.value.utilidad_neta)],
+        [],
+        ['Desglose por Grupo PUC', 'Total']
       ];
 
-      return sections.map((section) => {
-        const detailRows = section.rows.length
-          ? section.rows.map((row) => `
-              <tr class="detail-row ${section.className}">
-                <td>${row.grupo} - ${row.nombre}</td>
-                <td class="text-right num-entero">${formatMoney(row.total)}</td>
-              </tr>
-            `).join('')
-          : `
-              <tr class="detail-row empty">
-                <td>${section.empty}</td>
-                <td class="text-right">-</td>
-              </tr>
-            `;
+      buildBreakdownRows().forEach((row) => {
+        rows.push([
+          row.label,
+          row.kind === 'empty' ? '-' : Math.round(parseNumber(row.total))
+        ]);
+      });
 
-        return `
-          <tr class="section-row ${section.className}">
-            <td>${section.title}</td>
-            <td class="text-right num-entero">${
-              section.className === 'ingresos'
-                ? formatMoney(summary.value.ingresos)
-                : section.className === 'costos'
-                  ? formatMoney(summary.value.costos_ventas)
-                  : formatMoney(summary.value.gastos_operacionales)
-            }</td>
-          </tr>
-          ${detailRows}
-        `;
-      }).join('');
+      return rows;
     };
 
     const periodLabel = computed(() => {
@@ -332,104 +430,22 @@ export default {
       }
     };
 
-    const loadLogoDataUrl = async () => {
-      if (logoDataUrl) return logoDataUrl;
-      try {
-        const response = await fetch(COMPANY_LOGO_URL, { mode: 'cors' });
-        if (!response.ok) return null;
-        const blob = await response.blob();
-        logoDataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-        return logoDataUrl;
-      } catch {
-        return null;
-      }
-    };
-
-    const exportarPDF = async () => {
+    const exportarExcel = async () => {
       if (!report.value) return;
 
       try {
-        if (!jsPDF || !autoTable) {
-          const pdfTools = await getPdfTools();
-          jsPDF = pdfTools.jsPDF;
-          autoTable = pdfTools.autoTable;
-        }
+        const XLSX = await getXLSX();
+        const worksheet = XLSX.utils.aoa_to_sheet(buildExcelSheetRows());
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Estado de Resultados');
 
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm' });
-        const margin = 10;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        let y = margin;
-
-        const logo = await loadLogoDataUrl();
-        if (logo) {
-          doc.addImage(logo, 'PNG', margin, y, 30, 12);
-        }
-
-        doc.setFontSize(14);
-        doc.setTextColor(17, 94, 89);
-        doc.text('ESTADO DE RESULTADOS', pageWidth / 2, y + 6, { align: 'center' });
-
-        doc.setFontSize(9);
-        doc.setTextColor(100, 116, 139);
-        doc.text(`Fecha: ${formatFechaEmision()}`, pageWidth - margin, y + 6, { align: 'right' });
-
-        y += 16;
-
-        doc.setFontSize(10);
-        doc.text(`${businessInfo.identificacion.razonSocial}`, margin, y);
-        y += 5;
-        doc.text(`${businessInfo.identificacion.tipoDocumento}: ${businessInfo.identificacion.numeroDocumento}`, margin, y);
-        y += 5;
-        doc.text(`Periodo: ${report.value?.periodo?.etiqueta || periodLabel.value}`, margin, y);
-        y += 8;
-
-        autoTable(doc, {
-          startY: y,
-          head: [['Concepto', 'Valor']],
-          body: [
-            ['(+) Ingresos (Clase 4)', formatMoney(summary.value.ingresos)],
-            ['(-) Costos de Ventas (Clase 6)', formatMoney(summary.value.costos_ventas)],
-            ['(=) Utilidad Bruta', formatMoney(summary.value.utilidad_bruta)],
-            ['(-) Gastos Operacionales (Clase 5)', formatMoney(summary.value.gastos_operacionales)],
-            ['(=) Utilidad Neta', formatMoney(summary.value.utilidad_neta)]
-          ],
-          margin,
-          styles: { fontSize: 9 },
-          headStyles: {
-            fillColor: [17, 94, 89],
-            textColor: 255,
-            fontStyle: 'bold'
-          },
-          columnStyles: {
-            1: { halign: 'right' }
-          }
-        });
-
-        autoTable(doc, {
-          startY: doc.lastAutoTable.finalY + 8,
-          head: [['Sección', 'Grupo', 'Concepto', 'Total']],
-          body: buildPdfBreakdownRows(),
-          margin,
-          styles: { fontSize: 8 },
-          headStyles: {
-            fillColor: [15, 23, 42],
-            textColor: 255,
-            fontStyle: 'bold'
-          },
-          columnStyles: {
-            3: { halign: 'right' }
-          }
-        });
-
-        doc.save(`estado-resultados-${filters.value.anio}-${String(filters.value.mes).padStart(2, '0')}.pdf`);
+        XLSX.writeFile(
+          workbook,
+          `estado-resultados-${filters.value.anio}-${String(filters.value.mes).padStart(2, '0')}.xlsx`
+        );
       } catch (error) {
-        console.error('Error al exportar PDF:', error);
-        alert(error.message || 'No se pudo exportar el PDF.');
+        console.error('Error al exportar Excel:', error);
+        alert(error.message || 'No se pudo exportar el Excel.');
       }
     };
 
@@ -540,7 +556,7 @@ export default {
       periodLabel,
       formatMoney,
       consultar,
-      exportarPDF,
+      exportarExcel,
       imprimirReporte
     };
   }

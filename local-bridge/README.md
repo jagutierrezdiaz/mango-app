@@ -1,4 +1,4 @@
-# Bridge local Patio Bohemio
+# Bridge local
 
 Servicio local para el PC de caja/cocina en Windows. Expone:
 

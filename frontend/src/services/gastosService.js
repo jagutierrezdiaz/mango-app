@@ -53,6 +53,14 @@ export const gastosService = {
     return result.data;
   },
 
+  async getResumenPago(id) {
+    const response = await fetch(`${API_BASE}/gastos/${id}/resumen-pago`, {
+      headers: authHeader()
+    });
+    const result = await parseResult(response);
+    return result.data;
+  },
+
   async save(formData, id) {
     const url = id ? `${API_BASE}/gastos/${id}` : `${API_BASE}/gastos`;
     const method = id ? 'PUT' : 'POST';

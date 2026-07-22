@@ -343,6 +343,7 @@ export const registrarPagoCaja = async (req, res) => {
       comanda_id,
       metodo_pago,
       monto_efectivo,
+      monto_efectivo_bruto,
       monto_digital,
       aporte_servicio,
       notas
@@ -357,9 +358,11 @@ export const registrarPagoCaja = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Metodo de pago invalido.' });
     }
 
-    // 2. NORMALIZAR MONTOS RECIBIDOS
+    // 2. NORMALIZAR MONTOS RECIBIDOS (bruto para validar devuelta, neto para persistir)
+    const efectivoBruto = roundMoney(monto_efectivo_bruto ?? monto_efectivo);
     const efectivo = roundMoney(monto_efectivo);
     const digital = roundMoney(monto_digital);
+    const totalRecibidoBruto = roundMoney(efectivoBruto + digital);
     const totalRecibido = roundMoney(efectivo + digital);
 
     await connection.beginTransaction();
@@ -417,19 +420,28 @@ export const registrarPagoCaja = async (req, res) => {
 
     // 5. CALCULAR TOTAL FINAL SUMANDO EL SUBTOTAL DE DB + EL SERVICIO EDITADO
     const totalFinalCalculado = roundMoney(subTotalDB + servicioIngresado);
-    const diferencia = roundMoney(totalRecibido - totalFinalCalculado);
+    const diferencia = roundMoney(totalRecibidoBruto - totalFinalCalculado);
 
     // 6. VALIDACIÓN CRÍTICA CON REDONDEO PARA EVITAR DECIMALES INVISIBLES
-    if (Math.round(totalRecibido) < Math.round(totalFinalCalculado)) {
+    if (Math.round(totalRecibidoBruto) < Math.round(totalFinalCalculado)) {
       await connection.rollback();
       return res.status(400).json({
         success: false,
         message: 'El valor recibido es insuficiente.',
         data: {
           total_final: totalFinalCalculado,
-          total_recibido: totalRecibido,
-          falta_dinero: roundMoney(totalFinalCalculado - totalRecibido)
+          total_recibido: totalRecibidoBruto,
+          falta_dinero: roundMoney(totalFinalCalculado - totalRecibidoBruto)
         }
+      });
+    }
+
+    const devuelta = roundMoney(totalRecibidoBruto - totalFinalCalculado);
+    if (devuelta > 0 && Math.round(efectivoBruto) < Math.round(devuelta)) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'La devuelta se entrega en efectivo. El efectivo recibido debe ser mayor o igual a la devuelta.'
       });
     }
 
@@ -602,6 +614,80 @@ export const getMovimientosCajaHoy = async (_req, res) => {
     console.error('[CAJA DEBUG] Error.sqlMessage:', error?.sqlMessage);
     console.error('Error en getMovimientosCajaHoy:', error);
     return res.status(500).json({ success: false, message: 'Error al cargar movimientos de hoy.' });
+  }
+};
+
+export const getReporteCajaHoy = async (_req, res) => {
+  try {
+    const [rows] = await db.query(
+      `
+        SELECT
+          iv.metodo_pago AS Metodo_Pago,
+          SUM(iv.total_pagado) AS Total_Pagado,
+          SUM(
+            CASE
+              WHEN iv.metodo_pago = 'Efectivo' THEN iv.total_venta
+              WHEN iv.metodo_pago = 'Mixto' THEN
+                CASE
+                  WHEN iv.total_pagado = 0 THEN 0
+                  ELSE ROUND((iv.total_venta / iv.total_pagado) * iv.monto_efectivo, 0)
+                END
+              ELSE 0
+            END
+          ) AS Venta_Efectivo,
+          SUM(
+            CASE
+              WHEN iv.metodo_pago = 'Efectivo' THEN iv.aporte_servicio
+              WHEN iv.metodo_pago = 'Mixto' THEN
+                CASE
+                  WHEN iv.total_pagado = 0 THEN 0
+                  ELSE ROUND((iv.aporte_servicio / iv.total_pagado) * iv.monto_efectivo, 0)
+                END
+              ELSE 0
+            END
+          ) AS Servicio_Efectivo,
+          SUM(
+            CASE
+              WHEN iv.metodo_pago = 'Transferencia' THEN iv.total_venta
+              WHEN iv.metodo_pago = 'Mixto' THEN
+                CASE
+                  WHEN iv.total_pagado = 0 THEN 0
+                  ELSE ROUND((iv.total_venta / iv.total_pagado) * iv.monto_digital, 0)
+                END
+              ELSE 0
+            END
+          ) AS Venta_Transferencia,
+          SUM(
+            CASE
+              WHEN iv.metodo_pago = 'Transferencia' THEN iv.aporte_servicio
+              WHEN iv.metodo_pago = 'Mixto' THEN
+                CASE
+                  WHEN iv.total_pagado = 0 THEN 0
+                  ELSE ROUND((iv.aporte_servicio / iv.total_pagado) * iv.monto_digital, 0)
+                END
+              ELSE 0
+            END
+          ) AS Servicio_Transferencia
+        FROM ingresos_ventas iv
+        WHERE DATE(iv.fecha_venta) = CURDATE()
+          AND iv.estado = 'Generada'
+        GROUP BY iv.metodo_pago
+        ORDER BY iv.metodo_pago
+      `
+    );
+
+    const fecha = getCurrentSqlDateTime().slice(0, 10);
+
+    return res.json({
+      success: true,
+      data: {
+        fecha,
+        filas: rows || []
+      }
+    });
+  } catch (error) {
+    console.error('Error en getReporteCajaHoy:', error);
+    return res.status(500).json({ success: false, message: 'Error al generar reporte de caja.' });
   }
 };
 

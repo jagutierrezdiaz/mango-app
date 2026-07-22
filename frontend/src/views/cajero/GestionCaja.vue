@@ -22,7 +22,6 @@
             <i class="fas fa-cash-register text-white text-sm"></i>
           </div>
           <div class="hidden sm:block">
-            <p class="text-[9px] uppercase tracking-[0.2em] font-black text-rose-200/80 leading-none">Patio Bohemio</p>
             <p class="text-xs font-black uppercase tracking-wide text-white leading-tight">Gestión de Caja</p>
           </div>
         </div>
@@ -269,7 +268,7 @@
             <aside class="shrink-0 rounded-2xl border border-slate-200 bg-white p-4 xl:col-span-4" data-ui="PanelAccionesPago">
               <!-- [ELEMENTO] LogoPanelPago -->
               <div class="flex justify-center mb-6">
-                <img src="/img/logo.png" alt="Logo Patio Bohemio" class="h-14 w-auto object-contain panel-pago-logo" @error="handleImageError">
+                <img src="/img/logo.png" alt="Logo" class="h-14 w-auto object-contain panel-pago-logo" @error="handleImageError">
               </div>
 
               <!-- Totales -->
@@ -468,7 +467,7 @@
                 <!-- [SECCION] PanelAccionesPagoMostrador -->
                 <aside class="shrink-0 rounded-2xl border border-slate-200 bg-white p-4 xl:col-span-4" data-ui="PanelAccionesPagoMostrador">
                   <div class="flex justify-center mb-6">
-                    <img src="/img/logo.png" alt="Logo Patio Bohemio" class="h-14 w-auto object-contain panel-pago-logo" @error="handleImageError">
+                    <img src="/img/logo.png" alt="Logo" class="h-14 w-auto object-contain panel-pago-logo" @error="handleImageError">
                   </div>
 
                   <p class="text-[10px] uppercase tracking-widest font-black text-slate-500">Totales</p>
@@ -536,6 +535,19 @@
           >
             {{ loadingMovimientos ? 'Cargando...' : 'Actualizar' }}
           </button>
+          <button
+            type="button"
+            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-wide text-slate-700 transition hover:bg-slate-50"
+            :disabled="loadingReporteCaja"
+            @click="abrirReporteCaja"
+          >
+            {{ loadingReporteCaja ? 'Generando...' : 'Reporte de Caja' }}
+          </button>
+          <ReporteCajaDiario
+            ref="reporteCajaRef"
+            :cajero-nombre="cashierDisplayName"
+            :logo-data-url="logoDataUrl"
+          />
         </div>
 
         <div v-if="loadingMovimientos" class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm font-semibold text-slate-500 text-center">
@@ -810,14 +822,15 @@
               <button
                 type="button"
                 class="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-wide px-7 py-2.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                :disabled="savingPago || (Math.round(totalRecibido) < Math.round(totalFinalPago))"
+                :disabled="savingPago || !puedeRegistrarPago"
                 @click="registrarPago"
               >
                 <i :class="savingPago ? 'fas fa-circle-notch fa-spin' : 'fas fa-cash-register'"></i>
                 <span>{{ savingPago ? 'Registrando...' : 'Registrar Pago' }}</span>
               </button>
 
-              <p v-if="!puedeRegistrarPago" class="text-xs font-semibold text-slate-500 mt-2">No se puede registrar el pago, el dinero recibido por el cliente no es suficiente.</p>
+              <p v-if="Math.round(totalRecibido) < Math.round(totalFinalPago)" class="text-xs font-semibold text-slate-500 mt-2">No se puede registrar el pago, el dinero recibido por el cliente no es suficiente.</p>
+              <p v-else-if="efectivoInsuficienteParaDevuelta" class="text-xs font-semibold text-slate-500 mt-2">La devuelta se entrega en efectivo. El efectivo recibido debe ser mayor o igual a la devuelta.</p>
             </div>
             </article>
 
@@ -852,6 +865,7 @@ import { createSocketDeduper } from '../../utils/socketEventDedup.js';
 import { SOCKET_EVENTS } from '../../constants/socketEvents.js';
 import Swal from 'sweetalert2';
 import CrearArqueo from '../CrearArqueo.vue';
+import ReporteCajaDiario from '../../components/cajero/ReporteCajaDiario.vue';
 
 const UPLOADS_BASE = (process.env.VUE_APP_UPLOADS_BASE_URL || API_BASE.replace(/\/api\/?$/, '')).replace(/\/$/, '');
 const COMPANY_LOGO_URL = '/img/logo.png';
@@ -866,7 +880,8 @@ const gastoCajaOptions = [
 export default {
   name: 'GestionCaja',
   components: {
-    CrearArqueo
+    CrearArqueo,
+    ReporteCajaDiario
   },
   setup() {
     const router = useRouter();
@@ -890,6 +905,8 @@ export default {
     const savingPago = ref(false);
     const savingGasto = ref(false);
     const loadingMovimientos = ref(false);
+    const loadingReporteCaja = ref(false);
+    const reporteCajaRef = ref(null);
     const activeField = ref('monto_efectivo');
     const focusedKeypadField = ref('monto_efectivo');
     const lastTicket = ref(null);
@@ -1468,6 +1485,18 @@ export default {
       montoTransferenciaHabilitado.value ? Number(payment.value.monto_transferencia) || 0 : 0
     ));
 
+    const efectivoInsuficienteParaDevuelta = computed(() => {
+      if (devueltaPositiva.value <= 0) return false;
+      const bruto = Number(payment.value.monto_efectivo) || 0;
+      return bruto < devueltaPositiva.value;
+    });
+
+    const puedeRegistrarPago = computed(() => {
+      if (Math.round(totalRecibido.value) < Math.round(totalFinalPago.value)) return false;
+      if (efectivoInsuficienteParaDevuelta.value) return false;
+      return true;
+    });
+
     const cargarCaja = async ({ silent = false } = {}) => {
       loading.value = true;
       try {
@@ -1512,6 +1541,16 @@ export default {
         }
       } finally {
         loadingMovimientos.value = false;
+      }
+    };
+
+    const abrirReporteCaja = async () => {
+      if (!reporteCajaRef.value?.generar) return;
+      loadingReporteCaja.value = true;
+      try {
+        await reporteCajaRef.value.generar();
+      } finally {
+        loadingReporteCaja.value = false;
       }
     };
 
@@ -1846,6 +1885,15 @@ export default {
         }
       }
 
+      if (devueltaPositiva.value > 0 && efectivoRecibido < devueltaPositiva.value) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Devuelta en efectivo',
+          text: 'La devuelta se entrega en efectivo. El efectivo recibido debe ser mayor o igual a la devuelta.'
+        });
+        return;
+      }
+
       const ticketEfectivoBruto = Number(payment.value.monto_efectivo || 0);
       const ticketTransferencia = montoDigitalNeto.value;
       const ticketTotalRecibido = totalRecibido.value;
@@ -1860,6 +1908,7 @@ export default {
           aporte_servicio: servicioVoluntarioEditable.value,
           metodo_pago: payment.value.metodo_pago,
           monto_efectivo: montoEfectivoNeto.value,
+          monto_efectivo_bruto: ticketEfectivoBruto,
           monto_digital: montoDigitalNeto.value,
           notas: payment.value.notas || null
         });
@@ -2050,6 +2099,8 @@ export default {
       savingPago,
       savingGasto,
       loadingMovimientos,
+      loadingReporteCaja,
+      reporteCajaRef,
       activeField,
       payment,
       gastoForm,
@@ -2058,7 +2109,8 @@ export default {
       totalFinalPago,
       totalRecibido,
       devueltaPago,
-      // puedeRegistrarPago eliminado del return, ya no existe
+      puedeRegistrarPago,
+      efectivoInsuficienteParaDevuelta,
       movimientosHoy,
       totalEgresosHoy,
       totalFlujoHoy,
@@ -2089,6 +2141,7 @@ export default {
       onComandaMostradorGuardada,
       cargarCaja,
       cargarMovimientosHoy,
+      abrirReporteCaja,
       seleccionarComanda,
       abrirPago,
       abrirGastoCaja,

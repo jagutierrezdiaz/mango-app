@@ -608,11 +608,11 @@ export default {
           <body onload="window.print(); setTimeout(() => window.close(), 300);">
             <div class="report-head">
               <div class="logo-wrap">
-                <img src="${COMPANY_LOGO_URL}" alt="Logo Patio Bohemio">
+                <img src="${COMPANY_LOGO_URL}" alt="Logo">
               </div>
               <div class="report-head-center">
                 <h1>Catálogo de Precios Vigentes</h1>
-                <p>Patio Bohemio &mdash; Productos activos</p>
+                <p>Productos activos</p>
               </div>
               <div class="report-head-date">Generado:<br>${formatFechaEmision()}</div>
             </div>

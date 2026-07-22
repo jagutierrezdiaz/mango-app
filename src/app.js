@@ -117,14 +117,14 @@ app.use((req, res, next) => {
 app.use('/api', routes);
 app.use('/api/uploads', uploadRoutes);
 
-// Ruta de prueba para WebSocket nativo (protocolo Patio Bohemio)
+// Ruta de prueba para WebSocket nativo
 app.get('/test-socket', (req, res) => {
     const testPage = `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test WebSocket - Patio Bohemio</title>
+    <title>Test WebSocket</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -228,7 +228,7 @@ app.get('/test-socket', (req, res) => {
 <body>
     <div class="container">
         <h1>🔌 Prueba de WebSocket</h1>
-        <p class="subtitle">Patio Bohemio - Testing WebSocket Connection</p>
+        <p class="subtitle">Prueba de conexión WebSocket</p>
 
         <div style="text-align: center; margin-bottom: 20px;">
             <span class="status-indicator pending"></span>

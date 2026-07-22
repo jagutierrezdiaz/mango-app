@@ -313,7 +313,7 @@ const startSupportSession = async () => {
     const userPeerId = buildUserPeerId(nextSupportId)
     const rawUser = JSON.parse(localStorage.getItem('user') || 'null')
     const rolVista = resolveRoleView()
-    const userName = String(rawUser?.nombres || rawUser?.nombre_completo || rawUser?.usuario || 'Usuario Patio Bohemio')
+    const userName = String(rawUser?.nombres || rawUser?.nombre_completo || rawUser?.usuario || 'Usuario')
     const userLocal = String(rawUser?.sede_nombre || rawUser?.sede || 'Local principal')
 
     const mainTrack = stream.getVideoTracks()[0]

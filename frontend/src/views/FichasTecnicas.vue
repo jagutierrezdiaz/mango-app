@@ -9,7 +9,7 @@
 		<div class="mb-8 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 border-b pb-6">
 			<div>
 				<h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">Fichas Técnicas</h1>
-				<p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Patio Bohemio / Gestión de Menú</p>
+				<p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-black">Gestión de Menú</p>
 			</div>
 			<div class="w-full lg:w-auto flex flex-col sm:flex-row sm:items-center gap-3">
 				<div class="relative w-full sm:w-80">

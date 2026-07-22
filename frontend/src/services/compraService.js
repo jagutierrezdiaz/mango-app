@@ -118,9 +118,17 @@ export const compraService = {
     };
   },
 
-  async getCuentasPorPagar() {
-    const response = await fetch(`${API_BASE}/compras/cuentas-por-pagar`, {
-      headers: getHeaders(false)
+  async getCuentasPorPagar(filters = {}) {
+    const query = new URLSearchParams();
+    if (filters?.fecha_inicio) query.set('fecha_inicio', filters.fecha_inicio);
+    if (filters?.fecha_final) query.set('fecha_final', filters.fecha_final);
+    if (filters?.estado_pago) query.set('estado_pago', filters.estado_pago);
+    query.set('_ts', String(Date.now()));
+    const qs = query.toString();
+
+    const response = await fetch(`${API_BASE}/compras/cuentas-por-pagar?${qs}`, {
+      headers: getHeaders(false),
+      cache: 'no-store'
     });
     const result = await parseResult(response);
     return Array.isArray(result.data) ? result.data : [];

@@ -59,6 +59,14 @@ export const cajaService = {
     return result.data || { movimientos: [], total_egresos_hoy: 0, flujo_neto_hoy: 0 };
   },
 
+  async getReporteCajaHoy() {
+    const response = await safeFetch(`${API_BASE}/caja/reporte-caja-hoy`, {
+      headers: authHeaders()
+    }, 'No se pudo conectar para cargar el reporte de caja.');
+    const result = await parseResult(response, 'No se pudo cargar el reporte de caja.');
+    return result.data || { fecha: '', filas: [] };
+  },
+
   async registrarGastoCaja(payload) {
     const response = await safeFetch(`${API_BASE}/caja/gastos`, {
       method: 'POST',

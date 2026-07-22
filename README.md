@@ -1,4 +1,4 @@
-# Patio Bohemio App
+# Mango App
 
 Sistema de gestión para restaurante: backend Node.js/Express + frontend Vue 3.
 

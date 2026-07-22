@@ -196,8 +196,94 @@ export const getEstadoResultadosMensual = async (req, res) => {
         nombre: resolveGroupName(grupo, row.nombre),
         debitos,
         creditos,
+        total,
+        cuentas: []
+      });
+    }
+
+    const [accountRows] = await db.query(
+      `SELECT
+         LEFT(puc.codigo, 1) AS clase,
+         LEFT(puc.codigo, 2) AS grupo,
+         puc.codigo,
+         puc.nombre,
+         puc.tipo,
+         puc.naturaleza,
+         COALESCE(SUM(CASE WHEN mc.tipo_movimiento = 'Debito' THEN mc.monto ELSE 0 END), 0) AS debitos,
+         COALESCE(SUM(CASE WHEN mc.tipo_movimiento = 'Credito' THEN mc.monto ELSE 0 END), 0) AS creditos,
+         COALESCE(SUM(
+           CASE
+             WHEN puc.naturaleza = 'Debito'
+               THEN CASE WHEN mc.tipo_movimiento = 'Debito' THEN mc.monto ELSE -mc.monto END
+             ELSE
+               CASE WHEN mc.tipo_movimiento = 'Credito' THEN mc.monto ELSE -mc.monto END
+           END
+         ), 0) AS saldo
+       FROM plan_unico_cuentas puc
+       LEFT JOIN movimientos_contables mc
+         ON mc.cuenta_codigo = puc.codigo
+        AND mc.fecha >= ?
+        AND mc.fecha < ?
+       WHERE puc.codigo REGEXP '^[0-9]{6}$'
+         AND LEFT(puc.codigo, 1) IN ('4', '5', '6')
+       GROUP BY
+         LEFT(puc.codigo, 1),
+         LEFT(puc.codigo, 2),
+         puc.codigo,
+         puc.nombre,
+         puc.tipo,
+         puc.naturaleza
+       ORDER BY LEFT(puc.codigo, 1) ASC, LEFT(puc.codigo, 2) ASC, puc.codigo ASC`,
+      [period.start, period.end]
+    );
+
+    const groupIndexByClass = {
+      '4': Object.fromEntries(detailsByClass['4'].map((item) => [item.grupo, item])),
+      '5': Object.fromEntries(detailsByClass['5'].map((item) => [item.grupo, item])),
+      '6': Object.fromEntries(detailsByClass['6'].map((item) => [item.grupo, item]))
+    };
+
+    for (const row of accountRows || []) {
+      const clase = String(row.clase || '').trim();
+      const grupo = String(row.grupo || '').trim();
+      const codigo = String(row.codigo || '').trim();
+      if (!clase || !grupo || !codigo || !groupIndexByClass[clase]) continue;
+
+      const debitos = roundMoney(row.debitos || 0);
+      const creditos = roundMoney(row.creditos || 0);
+      const total = roundMoney(row.saldo || 0);
+      if (Math.abs(total) <= 0.009) continue;
+
+      let groupRow = groupIndexByClass[clase][grupo];
+      if (!groupRow) {
+        groupRow = {
+          grupo,
+          nombre: resolveGroupName(grupo),
+          debitos: 0,
+          creditos: 0,
+          total: 0,
+          cuentas: []
+        };
+        detailsByClass[clase].push(groupRow);
+        groupIndexByClass[clase][grupo] = groupRow;
+      }
+
+      groupRow.cuentas.push({
+        codigo,
+        nombre: String(row.nombre || '').trim() || codigo,
+        tipo: String(row.tipo || '').trim(),
+        naturaleza: String(row.naturaleza || '').trim(),
+        debitos,
+        creditos,
         total
       });
+    }
+
+    for (const clase of ['4', '5', '6']) {
+      detailsByClass[clase].sort((a, b) => String(a.grupo).localeCompare(String(b.grupo)));
+      for (const groupRow of detailsByClass[clase]) {
+        groupRow.cuentas.sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)));
+      }
     }
 
     const gastosOperacionales = normalizeClassAmount('5', classMap['5'].debitos, classMap['5'].creditos);

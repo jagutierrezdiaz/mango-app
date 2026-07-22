@@ -36,7 +36,6 @@
             <i class="fas fa-utensils text-white text-sm"></i>
           </div>
           <div class="hidden sm:block">
-            <p class="text-[9px] uppercase tracking-[0.2em] font-black text-blue-200/80 leading-none">Patio Bohemio</p>
             <p class="text-xs font-black uppercase tracking-wide text-white leading-tight">Cocina y Barra</p>
           </div>
         </div>

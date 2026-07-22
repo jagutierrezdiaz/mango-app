@@ -28,7 +28,7 @@
           </p>
           -->
 
-            <h1 class="font-black uppercase italic tracking-tighter text-white text-sm leading-tight">Patio Bohemio</h1>             
+            <h1 class="font-black uppercase italic tracking-tighter text-white text-sm leading-tight">{{ businessInfo.identificacion.razonSocial }}</h1>             
             <p class="text-[8px] text-cyan-100/80 uppercase font-bold tracking-widest">Sistema de Gestión</p>
             
           </div>
@@ -107,7 +107,7 @@
             <div class="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
               <i class="fas fa-leaf text-white text-xs"></i>
             </div>
-            <h1 class="font-black uppercase italic tracking-tighter text-white text-sm">Patio Bohemio</h1>
+            <h1 class="font-black uppercase italic tracking-tighter text-white text-sm">{{ businessInfo.identificacion.razonSocial }}</h1>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs font-bold text-cyan-100 hidden sm:inline truncate max-w-[120px]">{{ authUserDisplayName }}</span>
@@ -193,6 +193,7 @@ import { useAuthStore } from '../stores'
 import ConfirmarBorradoModal from '../components/ConfirmarBorradoModal.vue'
 import RemoteSupportWidget from '../components/RemoteSupportWidget.vue'
 import { DELETE_SECURITY_KEY } from '../composables/useDeleteSecurity.js'
+import { businessInfo } from '../config/businessInfo.js'
 
 export default {
   name: 'LayoutAdmin',
@@ -427,6 +428,7 @@ export default {
       menuGroups,
       openGroups,
       toggleGroup,
+      businessInfo,
       currentPageTitle,
       route,
       authStore,

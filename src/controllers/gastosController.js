@@ -251,6 +251,46 @@ export const getGastoById = async (req, res) => {
   }
 };
 
+export const getGastoResumenPago = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await db.query(
+      `
+        SELECT
+          g.proveedor_id,
+          p.razon_social,
+          DATE_FORMAT(g.fecha_gasto, '%Y-%m-%d %H:%i') AS fecha_gasto,
+          g.descripcion,
+          g.total_gasto
+        FROM gastos g
+        INNER JOIN proveedores p ON g.proveedor_id = p.id
+        WHERE g.id = ?
+        LIMIT 1
+      `,
+      [id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'Gasto no encontrado o sin proveedor asociado.' });
+    }
+
+    const row = rows[0];
+    return res.json({
+      success: true,
+      data: {
+        proveedor_id: row.proveedor_id,
+        razon_social: row.razon_social,
+        fecha_gasto: row.fecha_gasto,
+        descripcion: row.descripcion,
+        total_gasto: toMoney(row.total_gasto)
+      }
+    });
+  } catch (error) {
+    console.error('Error en getGastoResumenPago:', error);
+    return res.status(500).json({ success: false, message: 'Error al obtener resumen del gasto.' });
+  }
+};
+
 export const createGasto = async (req, res) => {
   const payload = req.body || {};
   const personalId = req.user?.id ?? null;

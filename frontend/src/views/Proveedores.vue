@@ -10,7 +10,7 @@
     <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b pb-4">
       <div>
         <h1 class="admin-crud-title text-3xl font-black text-teal-700 italic uppercase tracking-tighter">Proveedores</h1>
-        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-bold">Patio Bohemio - Gestión de Compras</p>
+        <p class="admin-crud-subtitle text-[10px] uppercase tracking-widest font-bold">Gestión de Compras</p>
       </div>
       <button @click="nuevoProveedor" class="pb-btn pb-btn-new px-4 py-2 text-[11px]">
         <i class="fas fa-plus"></i> Nuevo Proveedor
